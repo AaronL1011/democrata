@@ -1,0 +1,49 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+
+# Node / pnpm
+node_modules/
+.pnpm-store/
+frontend/dist/
+*.local
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Generated (e.g. protobuf)
+*_pb2.py
+*_pb2.pyi

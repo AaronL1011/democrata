@@ -1,0 +1,10 @@
+{
+  "name": "polly-pipeline",
+  "private": true,
+  "packageManager": "pnpm@9.14.2",
+  "scripts": {
+    "dev:frontend": "pnpm --filter frontend dev",
+    "build:frontend": "pnpm --filter frontend build",
+    "preview:frontend": "pnpm --filter frontend preview"
+  }
+}
