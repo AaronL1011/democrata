@@ -24,12 +24,19 @@
 ### Out of scope
 
 - Real-time streaming of parliamentary or other live feeds.
-- Partisan analysis, recommendations, or advocacy in content or framing.
+- Partisan advocacy, recommendations, or persuasive framing. (Note: Factual analysis that reveals asymmetries is not partisan—only advocacy is out of scope.)
 - Non–file-based data sources (unless added in a later revision of this spec).
 
 ### Non-partisanship
 
 Content and UI framing must remain strictly neutral. There must be no advocacy or partisan framing in explanations, summaries, or layout choices. Clarity and factual presentation are first-order requirements.
+
+**Important clarification:** Non-partisan means *rigorous factual accuracy without advocacy*, not false balance or refusal to present information that might reflect poorly on a party or member.
+
+- **Present facts completely and accurately.** If voting records show 95% of one party voted one way and 5% of another, present that accurately—do not frame it as "mixed views across parties."
+- **Avoid advocacy.** Do not tell users what to believe, how to vote, or which positions are "correct." Present information; let users draw conclusions.
+- **No false equivalence.** When facts are asymmetric, present them that way. Artificially balancing unequal things is itself a form of bias.
+- **Be transparent.** Show sources, methodology, and how information was selected so users can evaluate the presentation themselves.
 
 ---
 
