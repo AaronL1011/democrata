@@ -4,7 +4,7 @@
 
 **Project name:** Polly Pipeline (political data ingestion engine)
 
-**Mission:** Help people understand complex political information through clear, accessible explanations while maintaining strict non-partisanship.
+**Mission:** Help people understand complex political information through clear, accessible explanations while maintaining factual non-partisanship.
 
 **Summary:** The system is a server plus frontend. It provides (1) a political data ingestion pipeline with web upload portals and automated scraping, which cleans data, enriches metadata, embeds content, and prepares it for RAG in blob/vector storage; (2) a RAG query service that accepts natural-language requests, performs top-k embedding search, reasons over retrieved documents, and returns structured UI layouts and components; and (3) a web-based query portal where users ask questions about politics, society, and government and receive dashboards built from the server’s strongly typed insight and analysis payloads.
 
@@ -128,7 +128,11 @@ flowchart LR
 - **Repository:** Monorepo; domain-centred structure; inversion of dependencies (domain core has no FastAPI/gRPC imports; adapters depend on domain).
 - **Code:** Modular, tidy, loosely coupled; KISS and YAGNI.
 - **Server:** Stateless; horizontally scalable; no in-process state required for correctness; shared S3, Redis, and same AI/LLM config across instances.
-- **Cost and usage:** LLM token cost forwarded to user plus a defined profit margin. Avoid excessive LLM use: similar queries must be optimised with cache where possible, with cache design that avoids excessive overhead (e.g. TTL, key strategy).
+- **Cost and usage:** Freemium model with pay-as-you-go for heavy users. See [docs/COST_MODEL.md](docs/COST_MODEL.md) for full details.
+  - **Free tier:** 10 queries/day (anonymous) or 100 queries/month (registered)
+  - **Paid tier:** Prepaid credits (1 credit = $0.01); per-query cost based on actual LLM/embedding usage + 40% margin
+  - **Cached queries:** Free for paid users; count against limit for free tier
+  - **Philosophy:** Civic accessibility (basic access free) + sustainability (modest maintainer income)
 
 ---
 
@@ -158,8 +162,8 @@ Full field-level definitions live in the protobuf/schema definitions.
 
 ## 8. Non-functional requirements
 
-- **Availability / scaling:** The service must support horizontal scaling (add instances behind a load balancer).
-- **Cost:** User-facing pricing is derived from LLM token usage plus a defined profit margin.
+- **Availability / scaling:** The service must support horizontal scaling (add instances behind a load balancer). See [docs/SCALING.md](docs/SCALING.md) for phased roadmap from MVP to high-scale production.
+- **Cost:** Freemium + pay-as-you-go model. Free tier for casual civic inquiry; prepaid credits for heavy users. Per-query cost = actual API usage + 40% margin. See [docs/COST_MODEL.md](docs/COST_MODEL.md) for pricing details and revenue projections.
 - **Performance:** Similar queries are served from cache where feasible; cache design must minimise overhead (e.g. TTL, key strategy).
 - **Security:** Auth for uploads and API keys for automated jobs; no PII in logs. Exact mechanisms are TBD and will be documented when implemented.
 

@@ -105,6 +105,8 @@ Correctness does **not** depend on in-process state; all shared state lives in S
 - **Shared resources:** All instances use the same S3 bucket(s), Redis instance/cluster, vector store, and LLM/embedding configuration.
 - **No sticky sessions required:** Session or user context (if needed for costing/caching) is stored in Redis or derived from tokens, not in-process memory.
 
+For detailed scaling patterns (async job queues, rate limiting, batch processing) and phased implementation roadmap, see [SCALING.md](SCALING.md).
+
 ---
 
 ## 6. References
@@ -113,3 +115,4 @@ Correctness does **not** depend on in-process state; all shared state lives in S
 - [SCHEMAS.md](SCHEMAS.md) — API and RAG response schemas
 - [DATA_MODELS.md](DATA_MODELS.md) — Domain and storage models
 - [IMPLEMENTATION.md](IMPLEMENTATION.md) — Code layout and implementation conventions
+- [SCALING.md](SCALING.md) — Scaling patterns and phased roadmap

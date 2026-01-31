@@ -2,6 +2,8 @@
 
 Political data ingestion engine — file-based RAG on political data (bills, Hansard, members) with a non-partisan query portal. See [SPEC.md](SPEC.md) for the full spec.
 
+**Documentation:** [SPEC.md](SPEC.md) (product spec) · [docs/](docs/) — [Architecture](docs/ARCHITECTURE.md), [Schemas](docs/SCHEMAS.md), [Data models](docs/DATA_MODELS.md), [Implementation](docs/IMPLEMENTATION.md), [Cost model](docs/COST_MODEL.md)
+
 ## Prerequisites
 
 - **Python 3.12+** and [uv](https://docs.astral.sh/uv/)

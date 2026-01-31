@@ -40,6 +40,10 @@ polly_pipeline_server/
 │   │   ├── ports.py
 │   │   ├── use_cases.py
 │   │   └── entities.py
+│   ├── usage/              # Cost tracking and billing
+│   │   ├── ports.py        # Interfaces for balance store, payment
+│   │   ├── use_cases.py    # Check balance, record usage, purchase
+│   │   └── entities.py     # UsageEvent, UserBalance, CreditTransaction
 │   └── ...
 ├── adapters/               # Infrastructure and external services
 │   ├── storage/
@@ -83,11 +87,58 @@ polly_pipeline_server/
 
 - No in-process state required for correctness. Session or user context (for costing/caching) in Redis or derived from auth tokens.
 - Shared config (S3 bucket, Redis URL, vector store config, LLM API keys) via environment or config service; same across instances.
+- See [SCALING.md](SCALING.md) for phased roadmap from MVP (synchronous processing) to production-scale (async queues, rate limiting, clustering).
 
 ### 3.2 Cost and Caching
 
-- **LLM token cost:** Tracked per request; forwarded to user plus defined profit margin.
+For full pricing model and monetization strategy, see [COST_MODEL.md](COST_MODEL.md).
+
+- **LLM token cost:** Tracked per request; forwarded to user plus 40% margin.
 - **Cache:** Similar queries served from cache where feasible. Cache design: stable key from query (and optional user/session), TTL to limit staleness, key strategy to avoid excessive overhead (see [DATA_MODELS.md](DATA_MODELS.md) Redis section).
+- **Free tier:** Anonymous users get 10 queries/day; registered users get 100 queries/month (enforced via UserBalance in Redis/PostgreSQL).
+- **Paid tier:** Prepaid credits (1 credit = $0.01); credits deducted per query based on actual API usage.
+
+#### Cost Tracking Implementation
+
+**Middleware approach:** Wrap LLM and embedding calls to capture token counts:
+
+```python
+# Pseudocode for cost tracking middleware
+class CostTracker:
+    def __init__(self):
+        self.embedding_tokens = 0
+        self.llm_input_tokens = 0
+        self.llm_output_tokens = 0
+    
+    def track_embedding(self, text: str, tokens: int):
+        self.embedding_tokens += tokens
+    
+    def track_llm(self, input_tokens: int, output_tokens: int):
+        self.llm_input_tokens += input_tokens
+        self.llm_output_tokens += output_tokens
+    
+    def calculate_cost(self, config: CostConfig) -> CostBreakdown:
+        # Apply rates and margin from config
+        ...
+```
+
+**Token counting:**
+- Use `tiktoken` (for OpenAI models) or provider-specific tokenizers
+- Count tokens before API calls for estimation; use response metadata for actual counts
+- LangChain callbacks can intercept token usage from LLM responses
+
+**Cache hit attribution:**
+- Check cache before LLM call; if hit, skip cost tracking (query is free for paid users)
+- For free tier, cached responses still count against daily/monthly limit
+
+**Balance enforcement:**
+- Before executing query, check UserBalance in Redis (fast path)
+- If free tier exhausted and insufficient credits, return 402 Payment Required
+- After query, atomically decrement balance and log UsageEvent
+
+**Cost configuration:**
+- Store API rates (per 1K tokens) and margin in config/environment
+- Update without redeploy when provider prices change
 
 ### 3.3 Non-Partisanship
 
@@ -111,6 +162,7 @@ polly_pipeline_server/
 - **Chunking:** Strategy configurable (e.g. by section, paragraph, or fixed token/size); same strategy used for embedding and retrieval.
 - **Embedding:** One model, one dimension; configurable via env/config. Optional caching of embeddings (e.g. Redis) for identical text.
 - **Idempotency:** Job IDs and document IDs allow idempotent retries; overwrite or skip based on policy (e.g. same job_id + document_id).
+- **Async processing:** MVP uses synchronous ingestion; later phases introduce job queues and dedicated workers (see [SCALING.md](SCALING.md) Phase 2).
 
 ---
 
@@ -145,3 +197,5 @@ Exact variable names and defaults to be defined when implementing each adapter.
 - [ARCHITECTURE.md](ARCHITECTURE.md) — Components and data flows
 - [SCHEMAS.md](SCHEMAS.md) — API and RAG response schemas
 - [DATA_MODELS.md](DATA_MODELS.md) — Domain and storage models
+- [SCALING.md](SCALING.md) — Scaling patterns and phased implementation roadmap
+- [COST_MODEL.md](COST_MODEL.md) — Pricing model, margins, and revenue projections
