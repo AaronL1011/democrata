@@ -34,54 +34,76 @@
 <style>
   .query-form {
     width: 100%;
-    max-width: 48rem;
+    max-width: var(--max-width-md);
     margin: 0 auto;
   }
 
   .input-wrapper {
     display: flex;
-    gap: 0.75rem;
-    align-items: flex-end;
+    gap: var(--spacing-3);
+    align-items: center;
   }
 
   textarea {
     flex: 1;
-    padding: 0.75rem 1rem;
-    font-size: 1rem;
-    border: 1px solid #d1d5db;
-    border-radius: 0.5rem;
-    resize: none;
+    padding: var(--spacing-3) var(--spacing-4);
+    font-size: var(--font-size-base);
     font-family: inherit;
+    line-height: var(--line-height-normal);
+    color: var(--color-text-primary);
+    background: var(--color-surface);
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--radius-md);
+    resize: none;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  }
+
+  textarea::placeholder {
+    color: var(--color-text-muted);
   }
 
   textarea:focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: var(--color-primary);
+    box-shadow: var(--focus-ring);
   }
 
   textarea:disabled {
-    background: #f9fafb;
+    background: var(--color-gray-50);
+    color: var(--color-text-secondary);
+    cursor: not-allowed;
   }
 
   button {
-    padding: 0.75rem 1.5rem;
-    font-size: 1rem;
-    font-weight: 500;
-    background: #1f2937;
-    color: white;
+    padding: var(--spacing-3) var(--spacing-6);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    font-family: inherit;
+    color: var(--color-text-inverse);
+    background: var(--color-primary);
     border: none;
-    border-radius: 0.5rem;
+    border-radius: var(--radius-md);
     cursor: pointer;
     white-space: nowrap;
+    transition: background-color var(--transition-fast), transform var(--transition-fast);
   }
 
   button:hover:not(:disabled) {
-    background: #374151;
+    background: var(--color-primary-hover);
+  }
+
+  button:active:not(:disabled) {
+    background: var(--color-primary-active);
+    transform: translateY(1px);
+  }
+
+  button:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
   }
 
   button:disabled {
-    background: #9ca3af;
+    background: var(--color-gray-300);
     cursor: not-allowed;
   }
 </style>

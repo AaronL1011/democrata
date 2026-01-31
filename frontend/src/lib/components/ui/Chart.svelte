@@ -24,18 +24,28 @@
   let canvas: HTMLCanvasElement | undefined = $state();
   let chartInstance: Chart | null = null;
 
+  const CHART_COLORS = [
+    '#6366f1', // indigo
+    '#8b5cf6', // violet
+    '#ec4899', // pink
+    '#f43f5e', // rose
+    '#f97316', // orange
+    '#eab308', // yellow
+    '#22c55e', // green
+    '#14b8a6', // teal
+  ];
+
   $effect(() => {
     if (!canvas || series.length === 0) return;
 
-    // Destroy existing chart before creating new one
     chartInstance?.destroy();
 
     const labels = series[0]?.data.map((d) => d.label) || [];
     const datasets = series.map((s, index) => ({
       label: s.name,
       data: s.data.map((d) => d.value),
-      backgroundColor: getColors(index),
-      borderColor: getColors(index),
+      backgroundColor: CHART_COLORS[index % CHART_COLORS.length],
+      borderColor: CHART_COLORS[index % CHART_COLORS.length],
       borderWidth: 1,
     }));
 
@@ -48,13 +58,24 @@
         plugins: {
           legend: {
             display: series.length > 1,
+            labels: {
+              font: {
+                family: 'system-ui, -apple-system, sans-serif',
+              },
+            },
           },
         },
         scales:
           chartType !== 'pie' && chartType !== 'doughnut'
             ? {
-                x: { title: { display: !!xAxisLabel, text: xAxisLabel || '' } },
-                y: { title: { display: !!yAxisLabel, text: yAxisLabel || '' } },
+                x: {
+                  title: { display: !!xAxisLabel, text: xAxisLabel || '' },
+                  grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                },
+                y: {
+                  title: { display: !!yAxisLabel, text: yAxisLabel || '' },
+                  grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                },
               }
             : undefined,
       },
@@ -75,20 +96,6 @@
       doughnut: 'doughnut',
     };
     return typeMap[type] || 'bar';
-  }
-
-  function getColors(index: number): string {
-    const colors = [
-      '#6366f1',
-      '#8b5cf6',
-      '#a855f7',
-      '#d946ef',
-      '#ec4899',
-      '#f43f5e',
-      '#f97316',
-      '#eab308',
-    ];
-    return colors[index % colors.length];
   }
 </script>
 
@@ -112,20 +119,23 @@
   }
 
   .title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #1f2937;
-    margin-bottom: 0.75rem;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin: 0 0 var(--spacing-3);
   }
 
   .chart-container {
     height: 300px;
+    padding: var(--spacing-2);
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
   }
 
   .caption {
-    margin-top: 0.5rem;
-    font-size: 0.75rem;
-    color: #6b7280;
+    margin: var(--spacing-2) 0 0;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
     font-style: italic;
   }
 </style>

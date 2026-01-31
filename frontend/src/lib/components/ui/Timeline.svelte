@@ -53,10 +53,10 @@
   }
 
   .title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #1f2937;
-    margin-bottom: 1rem;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin: 0 0 var(--spacing-4);
   }
 
   .events {
@@ -66,7 +66,7 @@
 
   .event {
     display: flex;
-    gap: 1rem;
+    gap: var(--spacing-4);
   }
 
   .marker {
@@ -79,46 +79,50 @@
   .dot {
     width: 0.75rem;
     height: 0.75rem;
-    background: #6366f1;
-    border-radius: 50%;
+    background: var(--color-primary);
+    border-radius: var(--radius-full);
     flex-shrink: 0;
+    box-shadow: 0 0 0 3px var(--color-primary-muted);
   }
 
   .line {
     width: 2px;
     flex: 1;
-    background: #e5e7eb;
-    margin: 0.25rem 0;
+    background: var(--color-border);
+    margin: var(--spacing-1) 0;
   }
 
   .content {
     flex: 1;
-    padding-bottom: 1.5rem;
+    padding-bottom: var(--spacing-6);
   }
 
   .date {
-    font-size: 0.75rem;
-    color: #6b7280;
-    font-weight: 500;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
   }
 
   .label {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #1f2937;
-    margin: 0.25rem 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin: var(--spacing-1) 0;
   }
 
   .description {
-    font-size: 0.875rem;
-    color: #4b5563;
-    line-height: 1.5;
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+    line-height: var(--line-height-normal);
+    margin: 0;
   }
 
   .caption {
-    margin-top: 0.5rem;
-    font-size: 0.75rem;
-    color: #6b7280;
+    margin: var(--spacing-2) 0 0;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
     font-style: italic;
   }
 </style>

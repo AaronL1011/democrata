@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { getPartyColor } from '$lib/constants/partyColors';
+
   interface MemberProfile {
     member_id: string;
     name: string;
@@ -19,26 +21,6 @@
   let title = $derived(data.title as string | undefined);
   let members = $derived((data.members as MemberProfile[]) || []);
   let caption = $derived(data.caption as string | undefined);
-
-  function getPartyColor(party: string): string {
-    const partyColors: Record<string, string> = {
-      'Labour': '#dc2626',
-      'Conservative': '#2563eb',
-      'Liberal Democrat': '#f97316',
-      'Liberal Democrats': '#f97316',
-      'SNP': '#fbbf24',
-      'Scottish National Party': '#fbbf24',
-      'Green': '#16a34a',
-      'Green Party': '#16a34a',
-      'Plaid Cymru': '#10b981',
-      'DUP': '#991b1b',
-      'Sinn Féin': '#15803d',
-      'SDLP': '#22c55e',
-      'Alliance': '#eab308',
-      'Independent': '#6b7280',
-    };
-    return partyColors[party] || '#6b7280';
-  }
 </script>
 
 <div class="member-profiles">
@@ -106,51 +88,59 @@
   }
 
   .title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #1f2937;
-    margin-bottom: 0.75rem;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin: 0 0 var(--spacing-3);
   }
 
   .members-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1rem;
+    gap: var(--spacing-4);
   }
 
   .member-card {
-    background: #f9fafb;
-    border-radius: 0.5rem;
-    padding: 1rem;
-    border: 1px solid #e5e7eb;
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-4);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow var(--transition-base), transform var(--transition-base);
+  }
+
+  .member-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
   }
 
   .member-header {
     display: flex;
-    gap: 0.75rem;
+    gap: var(--spacing-3);
     align-items: flex-start;
-    margin-bottom: 0.75rem;
+    margin-bottom: var(--spacing-3);
   }
 
   .member-photo {
     width: 48px;
     height: 48px;
-    border-radius: 50%;
+    border-radius: var(--radius-full);
     object-fit: cover;
     flex-shrink: 0;
+    border: 2px solid var(--color-border-light);
   }
 
   .member-photo-placeholder {
     width: 48px;
     height: 48px;
-    border-radius: 50%;
-    background: #d1d5db;
+    border-radius: var(--radius-full);
+    background: var(--color-gray-200);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 600;
-    color: #4b5563;
-    font-size: 0.875rem;
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-gray-600);
+    font-size: var(--font-size-sm);
     flex-shrink: 0;
   }
 
@@ -160,64 +150,64 @@
   }
 
   .member-name {
-    font-size: 0.9375rem;
-    font-weight: 600;
-    color: #1f2937;
-    margin: 0 0 0.25rem;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin: 0 0 var(--spacing-1);
   }
 
   .member-name a {
     color: inherit;
     text-decoration: none;
+    transition: color var(--transition-fast);
   }
 
   .member-name a:hover {
-    color: #2563eb;
-    text-decoration: underline;
+    color: var(--color-primary);
   }
 
   .party-badge {
     display: inline-block;
-    padding: 0.125rem 0.5rem;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: white;
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-inverse);
   }
 
   .constituency {
-    font-size: 0.8125rem;
-    color: #6b7280;
-    margin: 0 0 0.5rem;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin: 0 0 var(--spacing-2);
   }
 
   .roles {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.375rem;
-    margin-bottom: 0.5rem;
+    gap: var(--spacing-2);
+    margin-bottom: var(--spacing-2);
   }
 
   .role-tag {
     display: inline-block;
-    padding: 0.125rem 0.5rem;
-    background: #e5e7eb;
-    border-radius: 0.25rem;
-    font-size: 0.75rem;
-    color: #374151;
+    padding: var(--spacing-1) var(--spacing-2);
+    background: var(--color-gray-100);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    color: var(--color-gray-700);
   }
 
   .biography {
-    font-size: 0.8125rem;
-    color: #4b5563;
-    line-height: 1.5;
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+    line-height: var(--line-height-normal);
     margin: 0;
   }
 
   .caption {
-    margin-top: 0.75rem;
-    font-size: 0.75rem;
-    color: #6b7280;
+    margin-top: var(--spacing-3);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
     font-style: italic;
   }
 </style>

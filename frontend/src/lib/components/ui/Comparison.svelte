@@ -67,26 +67,28 @@
   }
 
   .title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #1f2937;
-    margin-bottom: 0.75rem;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin: 0 0 var(--spacing-3);
   }
 
   .table-wrapper {
     overflow-x: auto;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
   }
 
   table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.875rem;
+    font-size: var(--font-size-sm);
   }
 
   th,
   td {
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid #e5e7eb;
+    padding: var(--spacing-3) var(--spacing-4);
+    border-bottom: 1px solid var(--color-border-light);
   }
 
   .attribute-header {
@@ -95,59 +97,67 @@
 
   .item-header {
     text-align: center;
-    background: #f9fafb;
+    background: var(--color-gray-50);
     vertical-align: top;
   }
 
   .item-name {
     display: block;
-    font-weight: 600;
-    color: #1f2937;
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
   }
 
   .item-description {
     display: block;
-    font-size: 0.75rem;
-    font-weight: 400;
-    color: #6b7280;
-    margin-top: 0.25rem;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-normal);
+    color: var(--color-text-secondary);
+    margin-top: var(--spacing-1);
   }
 
   .attribute-name {
-    font-weight: 500;
-    color: #374151;
-    background: #f9fafb;
+    font-weight: var(--font-weight-medium);
+    color: var(--color-gray-700);
+    background: var(--color-gray-50);
   }
 
   .attribute-value {
     text-align: center;
-    color: #4b5563;
+    color: var(--color-gray-600);
   }
 
   .attribute-value.first {
-    background: #eff6ff;
+    background: var(--color-primary-light);
   }
 
   .attribute-value.last {
-    background: #fef2f2;
+    background: var(--color-error-light);
+  }
+
+  tbody tr {
+    transition: background-color var(--transition-fast);
   }
 
   tbody tr:hover td {
-    background: #f3f4f6;
+    background: var(--color-gray-100);
   }
 
   tbody tr:hover .attribute-value.first {
-    background: #dbeafe;
+    background: var(--color-primary-muted);
   }
 
   tbody tr:hover .attribute-value.last {
-    background: #fee2e2;
+    background: var(--color-error-muted);
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
   }
 
   .caption {
-    margin-top: 0.5rem;
-    font-size: 0.75rem;
-    color: #6b7280;
+    margin: var(--spacing-2) 0 0;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
     font-style: italic;
   }
 </style>

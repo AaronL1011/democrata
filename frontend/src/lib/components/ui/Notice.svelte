@@ -23,58 +23,59 @@
 
 <style>
   .notice {
-    padding: 1rem;
-    border-radius: 0.5rem;
+    padding: var(--spacing-4);
+    border-radius: var(--radius-md);
     border-left: 4px solid;
   }
 
   .info {
-    background: #eff6ff;
-    border-color: #3b82f6;
+    background: var(--color-primary-light);
+    border-color: var(--color-primary);
   }
 
   .warning {
-    background: #fffbeb;
-    border-color: #f59e0b;
+    background: var(--color-warning-light);
+    border-color: var(--color-warning);
   }
 
   .important {
-    background: #fef2f2;
-    border-color: #ef4444;
+    background: var(--color-error-light);
+    border-color: var(--color-error);
   }
 
   .title {
-    font-size: 0.875rem;
-    font-weight: 600;
-    margin-bottom: 0.25rem;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    margin: 0 0 var(--spacing-1);
   }
 
   .info .title {
-    color: #1e40af;
+    color: var(--color-primary-active);
   }
 
   .warning .title {
-    color: #b45309;
+    color: var(--color-warning-text);
   }
 
   .important .title {
-    color: #b91c1c;
+    color: var(--color-error-text);
   }
 
   .message {
-    font-size: 0.875rem;
-    line-height: 1.5;
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+    margin: 0;
   }
 
   .info .message {
-    color: #1e40af;
+    color: var(--color-primary-active);
   }
 
   .warning .message {
-    color: #92400e;
+    color: var(--color-warning-text);
   }
 
   .important .message {
-    color: #991b1b;
+    color: var(--color-error-text);
   }
 </style>

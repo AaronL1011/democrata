@@ -14,15 +14,17 @@
       .map((id) => components.find((c) => c.id === id))
       .filter((c): c is ComponentData => c !== undefined);
   }
+
 </script>
 
 <div class="dashboard">
   {#if layout.title}
-    <h1 class="title">{layout.title}</h1>
-  {/if}
-  
-  {#if layout.subtitle}
-    <p class="subtitle">{layout.subtitle}</p>
+    <header class="dashboard-header">
+      <h1 class="title">{layout.title}</h1>
+      {#if layout.subtitle}
+        <p class="subtitle">{layout.subtitle}</p>
+      {/if}
+    </header>
   {/if}
 
   <div class="sections">
@@ -30,6 +32,7 @@
       <Section
         title={section.title}
         components={getComponentsForSection(section.component_ids)}
+        layout={section.layout}
       />
     {/each}
   </div>
@@ -37,25 +40,32 @@
 
 <style>
   .dashboard {
-    margin-top: 2rem;
+    margin-top: var(--spacing-6);
+  }
+
+  .dashboard-header {
+    margin-bottom: var(--spacing-6);
   }
 
   .title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #111827;
-    margin-bottom: 0.5rem;
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-heading);
+    margin: 0;
+    letter-spacing: var(--letter-spacing-tight);
   }
 
   .subtitle {
-    font-size: 1rem;
-    color: #6b7280;
-    margin-bottom: 1.5rem;
+    font-size: var(--font-size-base);
+    color: var(--color-text-secondary);
+    margin: var(--spacing-2) 0 0;
+    line-height: var(--line-height-relaxed);
+    max-width: 48rem;
   }
 
   .sections {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: var(--spacing-5);
   }
 </style>

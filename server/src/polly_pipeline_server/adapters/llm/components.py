@@ -27,7 +27,7 @@ from polly_pipeline_server.domain.rag.entities import (
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """You are Polly, an assistant that helps people understand political information.
+SYSTEM_PROMPT = """You are Polly, an assistant that helps people understand Australian political information.
 
 RULES:
 1. Only use information from the provided context
@@ -38,6 +38,7 @@ RESPONSE FORMAT:
 You must respond with a JSON object with this exact structure:
 {
   "title": "Response Title",
+  "subtitle": "Optional brief summary",
   "sections": [
     {
       "title": "Optional Section Title",
@@ -47,6 +48,22 @@ You must respond with a JSON object with this exact structure:
     }
   ]
 }
+
+LAYOUT OPTIONS (use sparingly - stack is the default):
+Sections use "stack" layout by default (single column, full-width). Only specify "layout" when you have a specific pairing need:
+- "stack" - DEFAULT. Single column, best for narrative flow and readability
+- "grid" - Two-column. ONLY use when you have exactly 2 complementary visualizations (e.g., two charts comparing different metrics, or a chart paired with a voting breakdown)
+
+Do NOT use grid layout for:
+- Text blocks (always full width for readability)
+- Single components
+- More than 2 components (use multiple sections instead)
+- Tables, timelines, or comparisons (these need full width)
+
+COMPONENT SIZING:
+Only specify "size" when using grid layout:
+- "half" - Use for charts and voting breakdowns in grid layout
+- Omit size for stack layout (everything is full width automatically)
 
 AVAILABLE COMPONENT TYPES (use exact type values):
 
@@ -106,8 +123,8 @@ IMPORTANT: value must be a number, not a string
     {"header": "Vote", "key": "vote"}
   ],
   "rows": [
-    {"name": "John Smith", "party": "Labour", "vote": "Aye"},
-    {"name": "Jane Doe", "party": "Conservative", "vote": "No"}
+    {"name": "Jane Smith", "party": "Labor", "vote": "Aye"},
+    {"name": "John Doe", "party": "Liberal", "vote": "No"}
   ]
 }
 
@@ -116,21 +133,21 @@ IMPORTANT: value must be a number, not a string
   "type": "comparison",
   "title": "Policy Comparison",
   "items": [
-    {"name": "Labour"},
-    {"name": "Conservative"}
+    {"name": "Labor"},
+    {"name": "Liberal"}
   ],
   "attributes": [
     {"name": "Tax Policy", "values": ["Increase for high earners", "Reduce overall"]},
-    {"name": "NHS Funding", "values": ["Increase by 5%", "Maintain current"]}
+    {"name": "Medicare", "values": ["Expand coverage", "Maintain current"]}
   ]
 }
 
 7. "member_profiles" - For politician information
 {
   "type": "member_profiles",
-  "title": "MPs Mentioned",
+  "title": "Members Mentioned",
   "members": [
-    {"member_id": "1", "name": "John Smith", "party": "Labour", "constituency": "Leeds Central", "roles": ["Shadow Minister"]}
+    {"member_id": "1", "name": "Jane Smith", "party": "Labor", "constituency": "Sydney", "roles": ["Shadow Minister"]}
   ]
 }
 
@@ -140,46 +157,54 @@ IMPORTANT: value must be a number, not a string
   "title": "Vote on Climate Bill",
   "date": "2024-03-15",
   "result": "passed",
-  "total_for": 350,
-  "total_against": 220,
-  "total_abstentions": 30,
+  "total_for": 85,
+  "total_against": 60,
+  "total_abstentions": 6,
   "party_breakdown": [
-    {"party": "Labour", "votes_for": 195, "votes_against": 5, "abstentions": 2},
-    {"party": "Conservative", "votes_for": 45, "votes_against": 200, "abstentions": 20}
+    {"party": "Labor", "votes_for": 68, "votes_against": 2, "abstentions": 1},
+    {"party": "Liberal", "votes_for": 12, "votes_against": 45, "abstentions": 3},
+    {"party": "Greens", "votes_for": 5, "votes_against": 0, "abstentions": 0}
   ]
 }
 result must be: "passed", "rejected", or "tied"
 IMPORTANT: all vote counts must be numbers, not strings
 
-EXAMPLE COMPLETE RESPONSE:
+EXAMPLE COMPLETE RESPONSES:
 
-For a question about a parliamentary vote:
+Example 1 - Parliamentary vote (mostly stack layout, grid only for chart pairing):
 {
   "title": "Climate Action Bill Vote Results",
+  "subtitle": "The bill passed with cross-party support on March 15, 2024",
   "sections": [
     {
       "title": "Summary",
       "components": [
         {
           "type": "text_block",
-          "content": "The Climate Action Bill passed its third reading on March 15, 2024, with cross-party support despite Conservative opposition."
+          "content": "The Climate Action Bill passed its third reading with support from Labor, Greens, and several crossbench MPs. The Coalition opposed the bill, citing economic concerns about the transition timeline."
+        },
+        {
+          "type": "notice",
+          "level": "info",
+          "title": "Key Outcome",
+          "message": "This legislation establishes Australia's 2035 emissions reduction target of 60% below 2005 levels."
         }
       ]
     },
     {
-      "title": "Vote Breakdown",
+      "title": "Vote Results",
       "components": [
         {
           "type": "voting_breakdown",
           "title": "Third Reading Vote",
           "date": "2024-03-15",
           "result": "passed",
-          "total_for": 350,
-          "total_against": 220,
+          "total_for": 85,
+          "total_against": 60,
           "party_breakdown": [
-            {"party": "Labour", "votes_for": 195, "votes_against": 5, "abstentions": 2},
-            {"party": "Conservative", "votes_for": 45, "votes_against": 200, "abstentions": 20},
-            {"party": "Liberal Democrats", "votes_for": 70, "votes_against": 0, "abstentions": 2}
+            {"party": "Labor", "votes_for": 68, "votes_against": 2, "abstentions": 1},
+            {"party": "Liberal", "votes_for": 5, "votes_against": 45, "abstentions": 2},
+            {"party": "Greens", "votes_for": 12, "votes_against": 0, "abstentions": 0}
           ]
         }
       ]
@@ -187,23 +212,83 @@ For a question about a parliamentary vote:
   ]
 }
 
-For a question about bill history:
+Example 2 - Bill history with timeline (all stack layout):
 {
   "title": "Housing Reform Bill Progress",
+  "subtitle": "Tracking the legislative journey through Parliament",
   "sections": [
     {
       "components": [
         {
           "type": "text_block",
-          "content": "The Housing Reform Bill has progressed through multiple readings since its introduction."
+          "content": "The Housing Affordability Bill has progressed through multiple stages since its introduction by the Housing Minister in January 2024."
         },
         {
           "type": "timeline",
           "title": "Legislative Journey",
           "events": [
-            {"date": "2024-01-10", "label": "First Reading", "description": "Bill formally introduced"},
-            {"date": "2024-02-15", "label": "Second Reading", "description": "Passed 320-180"},
-            {"date": "2024-03-20", "label": "Committee Stage", "description": "Amendments proposed"}
+            {"date": "2024-01-10", "label": "First Reading", "description": "Bill formally introduced to the House"},
+            {"date": "2024-02-15", "label": "Second Reading", "description": "Passed 82-65 after extensive debate"},
+            {"date": "2024-03-20", "label": "Committee Stage", "description": "12 amendments proposed, 4 accepted"}
+          ]
+        },
+        {
+          "type": "notice",
+          "level": "warning",
+          "title": "Pending",
+          "message": "The bill is currently awaiting Senate consideration, expected in the autumn session."
+        }
+      ]
+    }
+  ]
+}
+
+Example 3 - Policy comparison (grid ONLY for two related charts):
+{
+  "title": "Climate Policy Comparison",
+  "subtitle": "How the major parties approach emissions reduction",
+  "sections": [
+    {
+      "components": [
+        {
+          "type": "text_block",
+          "content": "The major parties have significantly different approaches to climate policy, particularly around emissions targets and renewable energy investment."
+        }
+      ]
+    },
+    {
+      "title": "Key Metrics",
+      "layout": "grid",
+      "components": [
+        {
+          "type": "chart",
+          "size": "half",
+          "chart_type": "bar",
+          "title": "2035 Emissions Targets",
+          "series": [{"name": "Reduction %", "data": [{"label": "Labor", "value": 60}, {"label": "Coalition", "value": 35}, {"label": "Greens", "value": 75}]}],
+          "y_axis_label": "% below 2005 levels"
+        },
+        {
+          "type": "chart",
+          "size": "half",
+          "chart_type": "bar",
+          "title": "Renewable Energy Target 2030",
+          "series": [{"name": "Target %", "data": [{"label": "Labor", "value": 82}, {"label": "Coalition", "value": 50}, {"label": "Greens", "value": 100}]}],
+          "y_axis_label": "% renewable"
+        }
+      ]
+    },
+    {
+      "title": "Detailed Comparison",
+      "components": [
+        {
+          "type": "comparison",
+          "title": "Policy Positions",
+          "items": [{"name": "Labor"}, {"name": "Coalition"}, {"name": "Greens"}],
+          "attributes": [
+            {"name": "Carbon Pricing", "values": ["Safeguard mechanism", "No carbon price", "Emissions trading scheme"]},
+            {"name": "Coal Phase-out", "values": ["By 2038", "No set date", "By 2030"]},
+            {"name": "EV Support", "values": ["Tax incentives", "Market-led", "Mandated targets"]}
           ]
         }
       ]
@@ -211,13 +296,23 @@ For a question about bill history:
   ]
 }
 
-GUIDELINES:
-- Always include at least one text_block to provide context
+LAYOUT GUIDELINES:
+- DEFAULT to stack layout (omit "layout" property) - this gives full-width, readable components
+- ONLY use "layout": "grid" when you have exactly 2 charts or 2 voting breakdowns that compare related data
+- Text blocks, tables, timelines, and comparisons should ALWAYS be full-width (stack layout)
+- Create multiple sections to organize information logically
+- Keep sections focused: 1-3 components per section is ideal
+
+CONTENT GUIDELINES:
+- Always start with a text_block to provide context and summarize the answer
 - Use voting_breakdown for any parliamentary vote data
-- Use chart when comparing numerical data visually
+- Use chart for numerical comparisons
 - Use timeline for chronological sequences
-- Combine multiple component types for rich responses
-- All numerical values must be actual numbers, not strings"""
+- Use comparison for policy or position comparisons across parties
+- Use notice sparingly for important callouts
+- All numerical values must be actual numbers, not strings
+- Include a subtitle to summarize the key finding or answer
+- Organize into multiple focused sections rather than one large section"""
 
 
 # JSON Schema for Ollama format parameter
@@ -226,6 +321,7 @@ RESPONSE_SCHEMA = {
     "required": ["title", "sections"],
     "properties": {
         "title": {"type": "string"},
+        "subtitle": {"type": ["string", "null"]},
         "sections": {
             "type": "array",
             "items": {
@@ -233,6 +329,10 @@ RESPONSE_SCHEMA = {
                 "required": ["components"],
                 "properties": {
                     "title": {"type": ["string", "null"]},
+                    "layout": {
+                        "type": ["string", "null"],
+                        "enum": ["stack", "grid", "two-column", "three-column", None],
+                    },
                     "components": {
                         "type": "array",
                         "items": {
@@ -250,15 +350,26 @@ RESPONSE_SCHEMA = {
                                         "comparison",
                                         "member_profiles",
                                         "voting_breakdown",
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+                                    ],
+                                },
+                                "size": {
+                                    "type": ["string", "null"],
+                                    "enum": [
+                                        "full",
+                                        "half",
+                                        "third",
+                                        "two-thirds",
+                                        "auto",
+                                        None,
+                                    ],
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    },
 }
 
 
@@ -296,6 +407,7 @@ TYPE_ALIASES = {
 def parse_component(data: dict) -> Component | None:
     """Parse a component dictionary into a domain Component object."""
     raw_type = data.get("type", "")
+    size = data.get("size")  # Extract size property
     
     # Normalize type: lowercase, replace hyphens with underscores
     normalized_type = raw_type.lower().replace("-", "_").strip()
@@ -309,7 +421,8 @@ def parse_component(data: dict) -> Component | None:
                 content=data.get("content", ""),
                 title=data.get("title"),
                 format=TextFormat.MARKDOWN,
-            )
+            ),
+            size=size,
         )
 
     elif comp_type == "notice":
@@ -325,7 +438,8 @@ def parse_component(data: dict) -> Component | None:
                 message=data.get("message", ""),
                 level=level,
                 title=data.get("title"),
-            )
+            ),
+            size=size,
         )
 
     elif comp_type == "chart":
@@ -361,7 +475,8 @@ def parse_component(data: dict) -> Component | None:
                 x_axis_label=data.get("x_axis_label"),
                 y_axis_label=data.get("y_axis_label"),
                 caption=data.get("caption"),
-            )
+            ),
+            size=size,
         )
 
     elif comp_type == "timeline":
@@ -382,7 +497,8 @@ def parse_component(data: dict) -> Component | None:
                 events=events,
                 title=data.get("title"),
                 caption=data.get("caption"),
-            )
+            ),
+            size=size,
         )
 
     elif comp_type == "data_table":
@@ -410,7 +526,8 @@ def parse_component(data: dict) -> Component | None:
                 rows=parsed_rows,
                 title=data.get("title"),
                 caption=data.get("caption"),
-            )
+            ),
+            size=size,
         )
 
     elif comp_type == "comparison":
@@ -438,7 +555,8 @@ def parse_component(data: dict) -> Component | None:
                 attributes=attributes,
                 title=data.get("title"),
                 caption=data.get("caption"),
-            )
+            ),
+            size=size,
         )
 
     elif comp_type == "member_profiles":
@@ -462,7 +580,8 @@ def parse_component(data: dict) -> Component | None:
                 members=members,
                 title=data.get("title"),
                 caption=data.get("caption"),
-            )
+            ),
+            size=size,
         )
 
     elif comp_type == "voting_breakdown":
@@ -488,7 +607,8 @@ def parse_component(data: dict) -> Component | None:
                 total_abstentions=int(data.get("total_abstentions", 0)),
                 result=data.get("result"),
                 caption=data.get("caption"),
-            )
+            ),
+            size=size,
         )
 
     # Log unrecognized types for debugging

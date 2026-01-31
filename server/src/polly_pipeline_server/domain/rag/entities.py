@@ -190,16 +190,20 @@ ComponentContent = (
 class Component:
     id: str
     content: ComponentContent
+    size: str | None = None  # 'full', 'half', 'third', 'two-thirds', 'auto'
 
     @classmethod
-    def create(cls, content: ComponentContent) -> "Component":
-        return cls(id=str(uuid4()), content=content)
+    def create(
+        cls, content: ComponentContent, size: str | None = None
+    ) -> "Component":
+        return cls(id=str(uuid4()), content=content, size=size)
 
 
 @dataclass
 class Section:
     component_ids: list[str]
     title: str | None = None
+    layout: str | None = None  # 'stack', 'grid', 'two-column', 'three-column'
 
 
 @dataclass

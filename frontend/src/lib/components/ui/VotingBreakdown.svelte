@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { getPartyColor } from '$lib/constants/partyColors';
+
   interface PartyVote {
     party: string;
     votes_for: number;
@@ -24,27 +26,6 @@
 
   let totalVotes = $derived(totalFor + totalAgainst);
   let forPercent = $derived(totalVotes > 0 ? (totalFor / totalVotes) * 100 : 50);
-
-  function getPartyColor(party: string): string {
-    const partyColors: Record<string, string> = {
-      'Labour': '#dc2626',
-      'Conservative': '#2563eb',
-      'Liberal Democrat': '#f97316',
-      'Liberal Democrats': '#f97316',
-      'SNP': '#fbbf24',
-      'Scottish National Party': '#fbbf24',
-      'Green': '#16a34a',
-      'Green Party': '#16a34a',
-      'Plaid Cymru': '#10b981',
-      'DUP': '#991b1b',
-      'Sinn Féin': '#15803d',
-      'SDLP': '#22c55e',
-      'Alliance': '#eab308',
-      'Independent': '#6b7280',
-      'Crossbench': '#8b5cf6',
-    };
-    return partyColors[party] || '#6b7280';
-  }
 </script>
 
 <div class="voting-breakdown">
@@ -95,7 +76,7 @@
             </div>
             <div class="party-votes">
               <span class="party-for">{party.votes_for}</span>
-              <span class="party-separator">-</span>
+              <span class="party-separator">–</span>
               <span class="party-against">{party.votes_against}</span>
               {#if party.abstentions && party.abstentions > 0}
                 <span class="party-abstentions">({party.abstentions} abs)</span>
@@ -120,98 +101,100 @@
   .header {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 0.25rem;
+    gap: var(--spacing-3);
+    margin-bottom: var(--spacing-1);
   }
 
   .title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #1f2937;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
     margin: 0;
   }
 
   .result-badge {
-    padding: 0.125rem 0.625rem;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 600;
+    padding: var(--spacing-1) var(--spacing-3);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
     text-transform: uppercase;
     letter-spacing: 0.025em;
   }
 
   .result-badge.passed {
-    background: #d1fae5;
-    color: #065f46;
+    background: var(--color-success-light);
+    color: var(--color-success-text);
   }
 
   .result-badge.rejected {
-    background: #fee2e2;
-    color: #991b1b;
+    background: var(--color-error-muted);
+    color: var(--color-error-text);
   }
 
   .date {
-    font-size: 0.8125rem;
-    color: #6b7280;
-    margin: 0 0 1rem;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin: 0 0 var(--spacing-4);
   }
 
   .summary {
-    margin-bottom: 1.25rem;
+    margin-bottom: var(--spacing-5);
   }
 
   .vote-bar {
     display: flex;
     height: 2rem;
-    border-radius: 0.375rem;
+    border-radius: var(--radius-sm);
     overflow: hidden;
-    background: #e5e7eb;
+    background: var(--color-border);
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.05);
   }
 
   .for-bar {
-    background: #22c55e;
-    transition: width 0.3s ease;
+    background: var(--color-vote-for);
+    transition: width var(--transition-slow);
   }
 
   .against-bar {
-    background: #ef4444;
-    transition: width 0.3s ease;
+    background: var(--color-vote-against);
+    transition: width var(--transition-slow);
   }
 
   .vote-labels {
     display: flex;
     justify-content: space-between;
-    margin-top: 0.5rem;
-    font-size: 0.875rem;
+    margin-top: var(--spacing-2);
+    font-size: var(--font-size-sm);
   }
 
   .for-label {
-    color: #16a34a;
+    color: var(--color-vote-for-text);
   }
 
   .abstain-label {
-    color: #6b7280;
+    color: var(--color-text-secondary);
   }
 
   .against-label {
-    color: #dc2626;
+    color: var(--color-vote-against-text);
   }
 
   .vote-count {
-    font-weight: 700;
+    font-weight: var(--font-weight-bold);
   }
 
   .party-breakdown {
-    background: #f9fafb;
-    border-radius: 0.5rem;
-    padding: 1rem;
+    background: var(--color-gray-50);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-4);
+    border: 1px solid var(--color-border-light);
   }
 
   .breakdown-title {
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: #374151;
-    margin: 0 0 0.75rem;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-gray-700);
+    margin: 0 0 var(--spacing-3);
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
@@ -219,71 +202,78 @@
   .party-list {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--spacing-2);
   }
 
   .party-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.375rem 0;
-    border-bottom: 1px solid #e5e7eb;
+    padding: var(--spacing-2) 0;
+    border-bottom: 1px solid var(--color-border-light);
+    transition: background-color var(--transition-fast);
   }
 
   .party-row:last-child {
     border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .party-row:first-child {
+    padding-top: 0;
   }
 
   .party-name {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-    color: #1f2937;
+    gap: var(--spacing-2);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
   }
 
   .party-dot {
     width: 0.625rem;
     height: 0.625rem;
-    border-radius: 50%;
+    border-radius: var(--radius-full);
     flex-shrink: 0;
+    box-shadow: 0 0 0 2px rgb(255 255 255 / 0.8);
   }
 
   .party-votes {
     display: flex;
     align-items: center;
-    gap: 0.375rem;
-    font-size: 0.875rem;
+    gap: var(--spacing-2);
+    font-size: var(--font-size-sm);
   }
 
   .party-for {
-    color: #16a34a;
-    font-weight: 600;
+    color: var(--color-vote-for-text);
+    font-weight: var(--font-weight-semibold);
     min-width: 2rem;
     text-align: right;
   }
 
   .party-separator {
-    color: #9ca3af;
+    color: var(--color-text-muted);
   }
 
   .party-against {
-    color: #dc2626;
-    font-weight: 600;
+    color: var(--color-vote-against-text);
+    font-weight: var(--font-weight-semibold);
     min-width: 2rem;
     text-align: left;
   }
 
   .party-abstentions {
-    color: #6b7280;
-    font-size: 0.75rem;
-    margin-left: 0.25rem;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    margin-left: var(--spacing-1);
   }
 
   .caption {
-    margin-top: 0.75rem;
-    font-size: 0.75rem;
-    color: #6b7280;
+    margin-top: var(--spacing-3);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
     font-style: italic;
   }
 </style>

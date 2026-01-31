@@ -1,4 +1,5 @@
 <script lang="ts">
+  import './styles/theme.css';
   import QueryInput from '$lib/components/query/QueryInput.svelte';
   import QueryResults from '$lib/components/query/QueryResults.svelte';
   import UploadPage from '$lib/components/upload/UploadPage.svelte';
@@ -34,25 +35,12 @@
   </section>
 
   <footer>
-    <p>Non-partisan political data analysis • Factual accuracy without advocacy</p>
+    <p>Non-partisan political data analysis · Factual accuracy without advocacy</p>
   </footer>
 </main>
 {/if}
 
 <style>
-  :global(body) {
-    margin: 0;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-      sans-serif;
-    background: #f9fafb;
-    color: #1f2937;
-    line-height: 1.5;
-  }
-
-  :global(*) {
-    box-sizing: border-box;
-  }
-
   main {
     min-height: 100vh;
     display: flex;
@@ -60,45 +48,48 @@
   }
 
   header {
-    padding: 2rem;
+    padding: var(--spacing-8);
     text-align: center;
-    background: white;
-    border-bottom: 1px solid #e5e7eb;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    box-shadow: var(--shadow-xs);
   }
 
   header h1 {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: #111827;
-    margin: 0 0 0.5rem;
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-heading);
+    margin: 0 0 var(--spacing-2);
+    letter-spacing: -0.025em;
   }
 
   .tagline {
-    color: #6b7280;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-base);
     margin: 0;
   }
 
   .query-section {
-    padding: 2rem;
-    background: white;
-    border-bottom: 1px solid #e5e7eb;
+    padding: var(--spacing-8);
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
   }
 
   .results-section {
     flex: 1;
-    padding: 2rem;
-    max-width: 64rem;
+    padding: var(--spacing-8);
+    max-width: var(--max-width-lg);
     width: 100%;
     margin: 0 auto;
   }
 
   footer {
-    padding: 1.5rem;
+    padding: var(--spacing-6);
     text-align: center;
-    color: #9ca3af;
-    font-size: 0.875rem;
-    border-top: 1px solid #e5e7eb;
-    background: white;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    border-top: 1px solid var(--color-border);
+    background: var(--color-surface);
   }
 
   footer p {

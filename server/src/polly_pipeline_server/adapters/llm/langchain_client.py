@@ -93,6 +93,7 @@ Respond with a JSON object as specified."""
                 Section(
                     title=section_data.get("title"),
                     component_ids=component_ids,
+                    layout=section_data.get("layout"),
                 )
             )
 

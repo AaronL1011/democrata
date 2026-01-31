@@ -20,11 +20,13 @@ class ComponentData(BaseModel):
     id: str
     type: str
     data: dict
+    size: str | None = None
 
 
 class SectionData(BaseModel):
     title: str | None = None
     component_ids: list[str]
+    layout: str | None = None
 
 
 class LayoutData(BaseModel):
@@ -91,11 +93,12 @@ async def query(
             "id": comp.id,
             "type": comp_type,
             "data": _serialize_component(comp.content),
+            "size": comp.size,
         }
         components_data.append(ComponentData(**comp_dict))
 
     sections_data = [
-        SectionData(title=s.title, component_ids=s.component_ids)
+        SectionData(title=s.title, component_ids=s.component_ids, layout=s.layout)
         for s in result.result.layout.sections
     ]
 

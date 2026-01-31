@@ -33,18 +33,22 @@
 
 <style>
   .text-block {
-    line-height: 1.6;
+    line-height: var(--line-height-relaxed);
   }
 
   .title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #1f2937;
-    margin-bottom: 0.5rem;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin: 0 0 var(--spacing-2);
+  }
+
+  .content {
+    color: var(--color-gray-700);
   }
 
   .content :global(p) {
-    margin-bottom: 0.75rem;
+    margin: 0 0 var(--spacing-3);
   }
 
   .content :global(p:last-child) {
@@ -53,27 +57,51 @@
 
   .content :global(ul),
   .content :global(ol) {
-    margin-left: 1.5rem;
-    margin-bottom: 0.75rem;
+    margin: 0 0 var(--spacing-3) var(--spacing-6);
+    padding: 0;
   }
 
   .content :global(li) {
-    margin-bottom: 0.25rem;
+    margin-bottom: var(--spacing-1);
+  }
+
+  .content :global(li:last-child) {
+    margin-bottom: 0;
   }
 
   .content :global(strong) {
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
   }
 
   .content :global(a) {
-    color: #2563eb;
+    color: var(--color-primary);
     text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color var(--transition-fast);
+  }
+
+  .content :global(a:hover) {
+    color: var(--color-primary-hover);
   }
 
   .content :global(code) {
-    background: #f3f4f6;
-    padding: 0.125rem 0.375rem;
-    border-radius: 0.25rem;
+    background: var(--color-gray-100);
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: var(--radius-sm);
     font-size: 0.875em;
+    font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  }
+
+  .content :global(blockquote) {
+    margin: var(--spacing-3) 0;
+    padding: var(--spacing-3) var(--spacing-4);
+    border-left: 3px solid var(--color-primary);
+    background: var(--color-gray-50);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  }
+
+  .content :global(blockquote p:last-child) {
+    margin-bottom: 0;
   }
 </style>

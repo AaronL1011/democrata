@@ -11,15 +11,20 @@ export interface QueryRequest {
   };
 }
 
+export type ComponentSize = 'full' | 'half' | 'third' | 'two-thirds' | 'auto';
+export type SectionLayout = 'stack' | 'grid' | 'two-column' | 'three-column';
+
 export interface ComponentData {
   id: string;
   type: string;
   data: Record<string, unknown>;
+  size?: ComponentSize;
 }
 
 export interface SectionData {
   title?: string;
   component_ids: string[];
+  layout?: SectionLayout;
 }
 
 export interface LayoutData {

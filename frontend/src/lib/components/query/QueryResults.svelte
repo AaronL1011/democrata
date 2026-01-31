@@ -18,10 +18,10 @@
   {#if $queryStore.response}
     <div class="metadata">
       <span>Retrieved {$queryStore.response.metadata.documents_retrieved} documents</span>
-      <span>•</span>
-      <span>{$queryStore.response.metadata.processing_time_ms}ms</span>
+      <span class="separator">·</span>
+      <span>{$queryStore.response.metadata.processing_time_ms / 1000}s</span>
       {#if $queryStore.response.cached}
-        <span>•</span>
+        <span class="separator">·</span>
         <span class="cached">Cached</span>
       {/if}
     </div>
@@ -30,29 +30,40 @@
 
 <style>
   .error {
-    padding: 1rem;
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    border-radius: 0.5rem;
-    color: #991b1b;
-    margin-top: 1rem;
+    padding: var(--spacing-4);
+    background: var(--color-error-light);
+    border: 1px solid var(--color-error-muted);
+    border-radius: var(--radius-md);
+    color: var(--color-error-text);
+    margin-top: var(--spacing-4);
+  }
+
+  .error p {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
   }
 
   .loading {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1rem;
-    padding: 3rem;
-    color: #6b7280;
+    gap: var(--spacing-4);
+    padding: var(--spacing-12);
+    color: var(--color-text-secondary);
+  }
+
+  .loading p {
+    margin: 0;
+    font-size: var(--font-size-sm);
   }
 
   .spinner {
     width: 2rem;
     height: 2rem;
-    border: 3px solid #e5e7eb;
-    border-top-color: #3b82f6;
-    border-radius: 50%;
+    border: 3px solid var(--color-border);
+    border-top-color: var(--color-primary);
+    border-radius: var(--radius-full);
     animation: spin 1s linear infinite;
   }
 
@@ -64,15 +75,20 @@
 
   .metadata {
     display: flex;
-    gap: 0.5rem;
+    gap: var(--spacing-2);
     justify-content: center;
-    margin-top: 1.5rem;
-    font-size: 0.875rem;
-    color: #6b7280;
+    align-items: center;
+    margin-top: var(--spacing-6);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+  }
+
+  .separator {
+    color: var(--color-text-muted);
   }
 
   .cached {
-    color: #059669;
-    font-weight: 500;
+    color: var(--color-success);
+    font-weight: var(--font-weight-medium);
   }
 </style>

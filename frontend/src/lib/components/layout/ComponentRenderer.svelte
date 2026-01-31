@@ -40,10 +40,14 @@
 
 <style>
   .unknown {
-    padding: 1rem;
-    background: #f3f4f6;
-    border-radius: 0.375rem;
-    color: #6b7280;
-    font-size: 0.875rem;
+    padding: var(--spacing-4);
+    background: var(--color-gray-100);
+    border-radius: var(--radius-md);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  .unknown p {
+    margin: 0;
   }
 </style>

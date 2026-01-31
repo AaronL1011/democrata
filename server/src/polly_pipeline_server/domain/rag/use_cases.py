@@ -21,7 +21,7 @@ class ExecuteQuery:
         vector_store: VectorStore,
         llm_client: LLMClient,
         cache: Cache,
-        top_k: int = 10,
+        top_k: int = 20,
         cache_ttl_seconds: int = 3600,
         cost_margin: float = 0.4,
     ):
