@@ -19,11 +19,13 @@ class LangChainLLMClient:
     def __init__(
         self,
         api_key: str | None = None,
+        base_url: str | None = None,
         model: str = "gpt-4o-mini",
         temperature: float = 0.3,
     ):
         self.llm = ChatOpenAI(
             api_key=api_key,
+            base_url=base_url,
             model=model,
             temperature=temperature,
         )

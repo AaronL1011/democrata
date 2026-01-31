@@ -33,6 +33,7 @@ class LLMConfig:
                 provider=provider,
                 model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
                 api_key=os.getenv("OPENAI_API_KEY"),
+                base_url=os.getenv("OPENAI_BASE_URL"),
                 temperature=float(os.getenv("LLM_TEMPERATURE", "0.3")),
             )
         elif provider == LLMProvider.OLLAMA:
@@ -65,6 +66,7 @@ class EmbeddingConfig:
                 provider=provider,
                 model=os.getenv("EMBEDDING_MODEL", "text-embedding-3-small"),
                 api_key=os.getenv("OPENAI_API_KEY"),
+                base_url=os.getenv("OPENAI_BASE_URL"),
                 dimensions=int(os.getenv("EMBEDDING_DIMENSIONS", "1536")),
             )
         elif provider == EmbeddingProvider.OLLAMA:

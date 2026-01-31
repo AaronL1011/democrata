@@ -25,6 +25,7 @@ def create_embedder(config: EmbeddingConfig | None = None) -> Embedder:
 
         return OpenAIEmbedder(
             api_key=config.api_key,
+            base_url=config.base_url,
             model=config.model,
         )
     elif config.provider == EmbeddingProvider.OLLAMA:
@@ -47,6 +48,7 @@ def create_llm_client(config: LLMConfig | None = None) -> LLMClient:
 
         return LangChainLLMClient(
             api_key=config.api_key,
+            base_url=config.base_url,
             model=config.model,
             temperature=config.temperature,
         )

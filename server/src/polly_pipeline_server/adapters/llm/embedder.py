@@ -5,9 +5,10 @@ class OpenAIEmbedder:
     def __init__(
         self,
         api_key: str | None = None,
+        base_url: str | None = None,
         model: str = "text-embedding-3-small",
     ):
-        self.client = AsyncOpenAI(api_key=api_key)
+        self.client = AsyncOpenAI(api_key=api_key, base_url=base_url)
         self.model = model
 
     async def embed(self, texts: list[str]) -> list[list[float]]:

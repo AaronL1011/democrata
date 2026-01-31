@@ -17,9 +17,7 @@
   
   {#if $queryStore.response}
     <div class="metadata">
-      <span>Retrieved {$queryStore.response.metadata.documents_retrieved} documents</span>
-      <span class="separator">·</span>
-      <span>{$queryStore.response.metadata.processing_time_ms / 1000}s</span>
+      <span>Referenced {$queryStore.response.metadata.documents_retrieved} documents in {$queryStore.response.metadata.processing_time_ms / 1000}s</span>
       {#if $queryStore.response.cached}
         <span class="separator">·</span>
         <span class="cached">Cached</span>
