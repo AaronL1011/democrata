@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package api.v1;
+
+import "api/v1/common.proto";
+
+service IngestionService {
+  rpc Upload(UploadRequest) returns (JobResult);
+  rpc GetUploadStatus(GetJobStatusRequest) returns (JobStatusResponse);
+  rpc TriggerScrape(ScrapeRequest) returns (JobResult);
+  rpc GetScrapeStatus(GetJobStatusRequest) returns (JobStatusResponse);
+}
+
+enum DocumentType {
+  DOCUMENT_TYPE_UNSPECIFIED = 0;
+  DOCUMENT_TYPE_BILL = 1;
+  DOCUMENT_TYPE_HANSARD = 2;
+  DOCUMENT_TYPE_MEMBER = 3;
+  DOCUMENT_TYPE_VOTE = 4;
+  DOCUMENT_TYPE_REPORT = 5;
+  DOCUMENT_TYPE_OTHER = 99;
+}
+
+message DocumentMetadata {
+  DocumentType document_type = 1;
+  string source = 2;
+  string date = 3;  // ISO 8601
+  string title = 4;
+  string description = 5;
+  repeated string tags = 6;
+}
+
+message UploadRequest {
+  oneof content {
+    bytes file_data = 1;  // Inline content, max 10MB
+    string file_ref = 2;  // Reference to pre-uploaded file
+  }
+  string filename = 3;
+  string content_type = 4;
+  DocumentMetadata metadata = 5;
+}
+
+message JobResult {
+  string job_id = 1;
+  Status status = 2;
+  int32 estimated_seconds = 3;
+}
+
+message GetJobStatusRequest {
+  string job_id = 1;
+}
+
+message JobStatusResponse {
+  string job_id = 1;
+  Status status = 2;
+  int32 progress_percent = 3;
+  Error error = 4;
+  int32 documents_processed = 5;
+  int32 chunks_created = 6;
+  Timestamp created_at = 7;
+  Timestamp completed_at = 8;
+}
+
+enum ScrapeSource {
+  SCRAPE_SOURCE_UNSPECIFIED = 0;
+  SCRAPE_SOURCE_PARLIAMENT_UK = 1;
+  SCRAPE_SOURCE_HANSARD = 2;
+  SCRAPE_SOURCE_LEGISLATION_GOV = 3;
+}
+
+message ScrapeRequest {
+  ScrapeSource source = 1;
+  string date_from = 2;  // ISO 8601
+  string date_to = 3;    // ISO 8601
+  repeated DocumentType document_types = 4;
+  repeated string resource_ids = 5;
+}

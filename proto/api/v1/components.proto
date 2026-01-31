@@ -1,0 +1,183 @@
+syntax = "proto3";
+
+package api.v1;
+
+import "api/v1/common.proto";
+
+message Component {
+  string id = 1;
+  
+  oneof content {
+    TextBlock text_block = 10;
+    Chart chart = 11;
+    Timeline timeline = 12;
+    Comparison comparison = 13;
+    DataTable data_table = 14;
+    Notice notice = 15;
+    MemberProfiles member_profiles = 16;
+    VotingBreakdown voting_breakdown = 17;
+  }
+}
+
+// --- TextBlock ---
+
+enum TextFormat {
+  TEXT_FORMAT_UNSPECIFIED = 0;
+  TEXT_FORMAT_PLAIN = 1;
+  TEXT_FORMAT_MARKDOWN = 2;
+}
+
+message TextBlock {
+  string title = 1;
+  string content = 2;
+  TextFormat format = 3;
+  repeated SourceReference sources = 4;
+}
+
+// --- Chart ---
+
+enum ChartType {
+  CHART_TYPE_UNSPECIFIED = 0;
+  CHART_TYPE_BAR = 1;
+  CHART_TYPE_LINE = 2;
+  CHART_TYPE_PIE = 3;
+  CHART_TYPE_DOUGHNUT = 4;
+  CHART_TYPE_HORIZONTAL_BAR = 5;
+  CHART_TYPE_STACKED_BAR = 6;
+}
+
+message ChartDataPoint {
+  string label = 1;
+  double value = 2;
+  string category = 3;
+}
+
+message ChartSeries {
+  string name = 1;
+  repeated ChartDataPoint data = 2;
+}
+
+message Chart {
+  string title = 1;
+  ChartType chart_type = 2;
+  repeated ChartSeries series = 3;
+  string x_axis_label = 4;
+  string y_axis_label = 5;
+  string caption = 6;
+  repeated SourceReference sources = 7;
+}
+
+// --- Timeline ---
+
+message TimelineEvent {
+  string date = 1;  // ISO 8601
+  string label = 2;
+  string description = 3;
+  string reference_url = 4;
+  int32 significance = 5;  // 1-5, higher = more significant
+}
+
+message Timeline {
+  string title = 1;
+  repeated TimelineEvent events = 2;
+  string caption = 3;
+  repeated SourceReference sources = 4;
+}
+
+// --- Comparison ---
+
+message ComparisonAttribute {
+  string name = 1;
+  repeated string values = 2;  // Parallel to Comparison.items
+}
+
+message ComparisonItem {
+  string name = 1;
+  string description = 2;
+}
+
+message Comparison {
+  string title = 1;
+  repeated ComparisonItem items = 2;
+  repeated ComparisonAttribute attributes = 3;
+  string caption = 4;
+  repeated SourceReference sources = 5;
+}
+
+// --- DataTable ---
+
+message TableColumn {
+  string header = 1;
+  string key = 2;
+  bool sortable = 3;
+  string align = 4;  // "left", "center", "right"
+}
+
+message TableRow {
+  map<string, string> cells = 1;  // Keys match TableColumn.key
+}
+
+message DataTable {
+  string title = 1;
+  repeated TableColumn columns = 2;
+  repeated TableRow rows = 3;
+  string caption = 4;
+  repeated SourceReference sources = 5;
+}
+
+// --- Notice ---
+
+enum NoticeLevel {
+  NOTICE_LEVEL_UNSPECIFIED = 0;
+  NOTICE_LEVEL_INFO = 1;
+  NOTICE_LEVEL_WARNING = 2;
+  NOTICE_LEVEL_IMPORTANT = 3;
+}
+
+message Notice {
+  string title = 1;
+  string message = 2;
+  NoticeLevel level = 3;
+}
+
+// --- MemberProfiles ---
+
+message MemberProfile {
+  string member_id = 1;
+  string name = 2;
+  string party = 3;
+  string constituency = 4;
+  repeated string roles = 5;
+  string photo_url = 6;
+  string biography = 7;
+  string profile_url = 8;
+}
+
+message MemberProfiles {
+  string title = 1;
+  repeated MemberProfile members = 2;
+  string caption = 3;
+  repeated SourceReference sources = 4;
+}
+
+// --- VotingBreakdown ---
+
+message PartyVote {
+  string party = 1;
+  int32 votes_for = 2;
+  int32 votes_against = 3;
+  int32 abstentions = 4;
+  int32 not_voting = 5;
+}
+
+message VotingBreakdown {
+  string title = 1;
+  string date = 2;
+  int32 total_for = 3;
+  int32 total_against = 4;
+  int32 total_abstentions = 5;
+  string result = 6;  // e.g., "Passed", "Rejected"
+  repeated PartyVote party_breakdown = 7;
+  string caption = 8;
+  repeated SourceReference sources = 9;
+}

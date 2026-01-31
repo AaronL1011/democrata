@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package api.v1;
+
+enum Status {
+  STATUS_UNSPECIFIED = 0;
+  STATUS_PENDING = 1;
+  STATUS_RUNNING = 2;
+  STATUS_SUCCESS = 3;
+  STATUS_FAILED = 4;
+}
+
+message PaginationRequest {
+  int32 page = 1;      // 1-indexed
+  int32 page_size = 2;
+}
+
+message PaginationResponse {
+  int32 page = 1;
+  int32 page_size = 2;
+  int32 total_items = 3;
+  int32 total_pages = 4;
+}
+
+message Error {
+  string code = 1;
+  string message = 2;
+  string details = 3;  // JSON-encoded additional context
+}
+
+message Timestamp {
+  int64 seconds = 1;
+  int32 nanos = 2;
+}
+
+message SourceReference {
+  string document_id = 1;
+  string source_name = 2;
+  string source_url = 3;
+  string source_date = 4;
+  string section_ref = 5;
+}

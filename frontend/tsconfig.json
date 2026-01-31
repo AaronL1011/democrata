@@ -4,7 +4,16 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "strict": true,
-    "noEmit": true
+    "noEmit": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "$lib": ["src/lib"],
+      "$lib/*": ["src/lib/*"]
+    },
+    "types": ["svelte"]
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "vite.config.ts"],
+  "extends": "@tsconfig/svelte/tsconfig.json"
 }

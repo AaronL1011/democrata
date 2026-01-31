@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package api.v1;
+
+import "api/v1/common.proto";
+
+service UsageService {
+  rpc GetBalance(GetBalanceRequest) returns (GetBalanceResponse);
+  rpc EstimateQueryCost(EstimateQueryCostRequest) returns (CostEstimate);
+  rpc GetUsageHistory(GetUsageHistoryRequest) returns (GetUsageHistoryResponse);
+}
+
+// --- Cost ---
+
+message CostBreakdown {
+  int32 embedding_tokens = 1;
+  int32 embedding_cost_cents = 2;
+  int32 llm_input_tokens = 3;
+  int32 llm_output_tokens = 4;
+  int32 llm_cost_cents = 5;
+  int32 vector_queries = 6;
+  int32 vector_cost_cents = 7;
+  int32 margin_cents = 8;
+  int32 total_cents = 9;
+  int32 total_credits = 10;  // 1 credit = 1 cent
+}
+
+// --- Balance ---
+
+message GetBalanceRequest {
+  string user_id = 1;
+  string session_id = 2;
+}
+
+message GetBalanceResponse {
+  string user_id = 1;
+  int32 credits = 2;
+  int32 free_tier_remaining = 3;
+  string free_tier_reset_at = 4;  // ISO 8601
+  bool is_free_tier = 5;
+}
+
+// --- Cost Estimation ---
+
+message EstimateQueryCostRequest {
+  string query = 1;
+  string session_id = 2;
+}
+
+message CostEstimate {
+  int32 estimated_credits = 1;
+  bool cached = 2;
+  bool free_tier_available = 3;
+  CostBreakdown breakdown = 4;
+}
+
+// --- Usage History ---
+
+message GetUsageHistoryRequest {
+  string user_id = 1;
+  string session_id = 2;
+  PaginationRequest pagination = 3;
+}
+
+message GetUsageHistoryResponse {
+  repeated UsageEvent events = 1;
+  PaginationResponse pagination = 2;
+}
+
+message UsageEvent {
+  string id = 1;
+  string timestamp = 2;  // ISO 8601
+  UsageEventType event_type = 3;
+  string query_preview = 4;  // Truncated for privacy
+  bool cached = 5;
+  CostBreakdown cost = 6;
+  int32 credits_charged = 7;
+}
+
+enum UsageEventType {
+  USAGE_EVENT_TYPE_UNSPECIFIED = 0;
+  USAGE_EVENT_TYPE_QUERY = 1;
+  USAGE_EVENT_TYPE_INGESTION = 2;
+}

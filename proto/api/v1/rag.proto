@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package api.v1;
+
+import "api/v1/common.proto";
+import "api/v1/components.proto";
+import "api/v1/usage.proto";
+
+service RAGService {
+  rpc Query(RAGQueryRequest) returns (RAGResponse);
+  rpc QueryStream(RAGQueryRequest) returns (stream RAGStreamResponse);
+}
+
+message RAGQueryRequest {
+  string query = 1;
+  string session_id = 2;
+  QueryFilters filters = 3;
+  bool estimate_only = 4;  // If true, return cost estimate without executing
+}
+
+message QueryFilters {
+  repeated string document_types = 1;
+  string date_from = 2;  // ISO 8601
+  string date_to = 3;    // ISO 8601
+  repeated string sources = 4;
+  repeated string member_ids = 5;
+}
+
+message Layout {
+  string title = 1;
+  string subtitle = 2;
+  repeated Section sections = 3;
+}
+
+message Section {
+  string title = 1;
+  repeated string component_ids = 2;  // References Component.id
+}
+
+message RAGResponse {
+  Layout layout = 1;
+  repeated Component components = 2;
+  CostBreakdown cost = 3;
+  bool cached = 4;
+  int32 credits_charged = 5;
+  int32 balance_remaining = 6;
+  QueryMetadata metadata = 7;
+}
+
+message QueryMetadata {
+  int32 documents_retrieved = 1;
+  int32 chunks_used = 2;
+  int64 processing_time_ms = 3;
+  string model = 4;
+}
+
+message RAGStreamResponse {
+  oneof update {
+    QueryProgress progress = 1;
+    RAGResponse response = 2;
+    Error error = 3;
+  }
+}
+
+message QueryProgress {
+  QueryStage stage = 1;
+  int32 percent = 2;
+  string message = 3;
+}
+
+enum QueryStage {
+  QUERY_STAGE_UNSPECIFIED = 0;
+  QUERY_STAGE_EMBEDDING = 1;
+  QUERY_STAGE_RETRIEVING = 2;
+  QUERY_STAGE_REASONING = 3;
+  QUERY_STAGE_GENERATING = 4;
+  QUERY_STAGE_COMPLETE = 5;
+}

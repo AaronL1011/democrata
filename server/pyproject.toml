@@ -5,15 +5,46 @@ description = "Polly Pipeline API server (FastAPI + gRPC)"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    # Web framework
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.32.0",
+    "python-multipart>=0.0.12",
+    # gRPC
+    "grpcio>=1.60.0",
+    "protobuf>=4.25.0",
+    # Data validation
+    "pydantic>=2.9.0",
+    # LLM / RAG
+    "langchain>=0.3.0",
+    "langchain-openai>=0.2.0",
+    "openai>=1.50.0",
+    "tiktoken>=0.7.0",
+    # Infrastructure clients
+    "redis>=5.0.0",
+    "boto3>=1.35.0",
+    "aiofiles>=24.0.0",
+    # Vector store (using Qdrant for MVP - simpler setup than pgvector)
+    "qdrant-client>=1.12.0",
+    # Async Postgres (for future user/billing tables)
+    "asyncpg>=0.30.0",
+    "httpx>=0.28.1",
+    # Environment variable loading
+    "python-dotenv>=1.0.0",
+    # Document parsing
+    "pypdf>=6.0.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "ruff>=0.8.0",
     "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
     "httpx>=0.28.0",
+    # Proto code generation
+    "grpcio-tools>=1.60.0",
+    # Testing utilities
+    "fakeredis>=2.25.0",
+    "moto[s3]>=5.0.0",
 ]
 
 [build-system]
