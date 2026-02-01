@@ -108,6 +108,7 @@ class LLMResponseComposer:
         return COMPOSER_PROMPT.format(
             query=query,
             intent=intent_str,
+            response_depth=intent.response_depth.value,
             extracted_data=extracted_data_str,
         )
 

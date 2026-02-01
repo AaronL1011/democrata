@@ -11,6 +11,7 @@ from polly_pipeline_server.domain.agents.entities import (
     ExtractedEntities,
     IntentResult,
     QueryType,
+    ResponseDepth,
     RetrievalStrategy,
 )
 
@@ -114,6 +115,13 @@ class LLMQueryPlanner:
         confidence = float(data.get("confidence", 0.8))
         confidence = max(0.0, min(1.0, confidence))
 
+        # Parse response depth
+        depth_str = data.get("response_depth", "standard")
+        try:
+            response_depth = ResponseDepth(depth_str)
+        except ValueError:
+            response_depth = ResponseDepth.STANDARD
+
         return IntentResult(
             query_type=query_type,
             entities=entities,
@@ -121,4 +129,5 @@ class LLMQueryPlanner:
             retrieval_strategy=retrieval_strategy,
             rewritten_queries=rewritten_queries,
             confidence=confidence,
+            response_depth=response_depth,
         )

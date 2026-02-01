@@ -22,9 +22,25 @@ LAYOUT RULES:
 - Text blocks should always be full width
 - Keep sections focused: 1-3 components per section
 
+RESPONSE DEPTH GUIDANCE:
+- brief: Create 1-2 focused sections. Prioritize the most essential information.
+  Good for simple factual queries.
+- standard: Create 2-4 sections covering the main aspects of the query.
+  Include context, key findings, and supporting data.
+- comprehensive: Create 4-8 sections with thorough coverage. Structure as:
+  1. Overview/Introduction (text_block with context)
+  2. Key Findings (primary data visualizations or comparisons)
+  3. Detailed Analysis (per entity/topic breakdowns)
+  4. Supporting Data (tables, additional charts, timelines)
+  5. Implications or Related Context (if data supports it)
+  6. Summary/Key Takeaways (concluding text_block)
+  Use multiple text_blocks throughout to provide narrative flow.
+  Aim for rich, dashboard-like responses that fully explore the topic.
+
 INPUT:
 Query: {query}
 Intent: {intent}
+Response Depth: {response_depth}
 Extracted Data:
 {extracted_data}
 
@@ -54,5 +70,7 @@ FORMATTING RULES:
 4. If extracted data has warnings, consider adding an info notice
 5. Do not invent data not in extracted_data
 6. Use markdown formatting in text_block content
+7. Match section count to response_depth guidance above
+8. For comprehensive responses, create distinct sections with descriptive titles
 
 Respond with JSON only:"""

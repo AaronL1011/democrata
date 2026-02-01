@@ -16,7 +16,13 @@ RETRIEVAL STRATEGIES:
 - chronological: Date-filtered, time-ordered (for timeline queries)
 - broad: Wider search with diversity (for analytical queries)
 
-COMPONENT TYPES (select 1-4 most appropriate):
+RESPONSE DEPTH (determines how detailed the response should be):
+- brief: Simple factual queries, single-entity lookups. Use 1-2 components.
+- standard: Comparative queries, timeline queries, voting queries. Use 2-4 components.
+- comprehensive: Analytical queries, multi-entity comparisons, "explain" or "why" questions,
+  complex policy analysis, historical overviews. Use 4-6 components for thorough coverage.
+
+COMPONENT TYPES (select based on response_depth):
 - text_block: Explanatory text content
 - chart: Data visualization (bar, line, pie charts)
 - timeline: Chronological events
@@ -29,6 +35,7 @@ COMPONENT TYPES (select 1-4 most appropriate):
 OUTPUT FORMAT (JSON only, no markdown):
 {{
   "query_type": "factual|comparative|timeline|voting|analytical",
+  "response_depth": "brief|standard|comprehensive",
   "entities": {{
     "parties": ["party names mentioned or implied"],
     "members": ["politician names mentioned"],
@@ -50,6 +57,11 @@ RULES:
 3. For comparative queries, create one rewritten query per entity
 4. Set confidence lower (0.5-0.7) if query is ambiguous
 5. Always include at least text_block in expected_components
+6. Match response_depth to query complexity:
+   - "Who is the PM?" → brief (simple factual)
+   - "Compare Labor and Liberal climate policies" → standard (comparative)
+   - "Explain the history and impact of the carbon tax" → comprehensive (analytical)
+7. For comprehensive queries, select 4-6 diverse component types to enable rich dashboards
 
 Query: {query}
 

@@ -24,6 +24,14 @@ class RetrievalStrategy(str, Enum):
     BROAD = "broad"  # Wider search with diversity sampling
 
 
+class ResponseDepth(str, Enum):
+    """Depth of response based on query complexity."""
+
+    BRIEF = "brief"  # Simple factual queries, 1-2 sections
+    STANDARD = "standard"  # Comparative/timeline queries, 2-4 sections
+    COMPREHENSIVE = "comprehensive"  # Analytical queries, 4-8 sections
+
+
 @dataclass
 class ExtractedEntities:
     """Entities extracted from a user query."""
@@ -57,6 +65,7 @@ class IntentResult:
     retrieval_strategy: RetrievalStrategy
     rewritten_queries: list[str] = field(default_factory=list)
     confidence: float = 1.0
+    response_depth: ResponseDepth = ResponseDepth.STANDARD
 
     @classmethod
     def default_factual(cls, query: str) -> "IntentResult":
@@ -68,6 +77,7 @@ class IntentResult:
             retrieval_strategy=RetrievalStrategy.SINGLE_FOCUS,
             rewritten_queries=[query],
             confidence=0.5,
+            response_depth=ResponseDepth.BRIEF,
         )
 
 

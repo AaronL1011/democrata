@@ -87,7 +87,10 @@ class ExecuteQuery:
         try:
             # Step 1: Plan - Classify intent and extract entities
             intent = await self.planner.analyze(query.text)
-            logger.debug(f"Intent: {intent.query_type}, components: {intent.expected_components}")
+            logger.debug(
+                f"Intent: {intent.query_type}, depth: {intent.response_depth.value}, "
+                f"components: {intent.expected_components}"
+            )
 
             # Step 2: Retrieve - Get context using intent-driven strategy
             retrieval = await self.retriever.retrieve(query.text, intent)

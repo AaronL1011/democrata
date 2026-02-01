@@ -24,7 +24,7 @@
     <div class="hero-content">
       <h1>Polly AI</h1>
       <p class="tagline">
-        Democratising politics through clear, factual analysis and intelligence
+        Democratising politics through clear, factual analysis and intelligence.
       </p>
     </div>
     
@@ -39,7 +39,7 @@
     </section>
 
     <footer>
-      <p>Polly AI strives to be a non-partisan political intelligence tool · AI may have inaccuracies, always check sources</p>
+      <p>Polly AI strives to be non-partisan and factualy accurate. AI may have inaccuracies, always check sources.</p>
     </footer>
   {/if}
 </main>
@@ -101,7 +101,7 @@
     color: var(--color-text-secondary);
     font-size: var(--font-size-lg);
     margin: 0;
-    max-width: 32rem;
+    max-width: 48rem;
     line-height: var(--line-height-relaxed);
     transition: font-size 0.5s cubic-bezier(0.4, 0, 0.2, 1),
                 opacity 0.3s ease;
