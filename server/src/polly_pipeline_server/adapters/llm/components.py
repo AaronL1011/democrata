@@ -416,9 +416,14 @@ def parse_component(data: dict) -> Component | None:
     comp_type = TYPE_ALIASES.get(normalized_type, normalized_type)
 
     if comp_type == "text_block":
+        content = data.get("content", "").strip()
+        if not content:
+            logger.debug("Skipping text_block with empty content")
+            return None
+
         return Component.create(
             TextBlock(
-                content=data.get("content", ""),
+                content=content,
                 title=data.get("title"),
                 format=TextFormat.MARKDOWN,
             ),
@@ -426,6 +431,11 @@ def parse_component(data: dict) -> Component | None:
         )
 
     elif comp_type == "notice":
+        message = data.get("message", "").strip()
+        if not message:
+            logger.debug("Skipping notice with empty message")
+            return None
+
         level_str = data.get("level", "info")
         level = NoticeLevel.INFO
         if level_str == "warning":
@@ -435,7 +445,7 @@ def parse_component(data: dict) -> Component | None:
 
         return Component.create(
             Notice(
-                message=data.get("message", ""),
+                message=message,
                 level=level,
                 title=data.get("title"),
             ),
@@ -460,12 +470,17 @@ def parse_component(data: dict) -> Component | None:
                 )
                 for d in s.get("data", [])
             ]
-            series.append(
-                ChartSeries(
-                    name=s.get("name", ""),
-                    data=data_points,
+            if data_points:
+                series.append(
+                    ChartSeries(
+                        name=s.get("name", ""),
+                        data=data_points,
+                    )
                 )
-            )
+
+        if not series:
+            logger.debug("Skipping chart with no series data")
+            return None
 
         return Component.create(
             Chart(
@@ -490,7 +505,12 @@ def parse_component(data: dict) -> Component | None:
                 significance=int(e.get("significance", 3)),
             )
             for e in events_data
+            if e.get("date") or e.get("label")  # Must have at least date or label
         ]
+
+        if not events:
+            logger.debug("Skipping timeline with no events")
+            return None
 
         return Component.create(
             Timeline(
@@ -511,14 +531,18 @@ def parse_component(data: dict) -> Component | None:
                 align=str(c.get("align", "left")),
             )
             for c in columns_data
+            if c.get("header") or c.get("key")  # Must have header or key
         ]
 
         rows = data.get("rows", [])
-        # Ensure rows are dicts with string values
         parsed_rows = []
         for row in rows:
-            if isinstance(row, dict):
+            if isinstance(row, dict) and row:
                 parsed_rows.append({str(k): str(v) for k, v in row.items()})
+
+        if not columns or not parsed_rows:
+            logger.debug("Skipping data_table with no columns or rows")
+            return None
 
         return Component.create(
             DataTable(
@@ -538,6 +562,7 @@ def parse_component(data: dict) -> Component | None:
                 description=i.get("description"),
             )
             for i in items_data
+            if i.get("name")  # Must have a name
         ]
 
         attributes_data = data.get("attributes", [])
@@ -547,7 +572,12 @@ def parse_component(data: dict) -> Component | None:
                 values=[str(v) for v in a.get("values", [])],
             )
             for a in attributes_data
+            if a.get("name") and a.get("values")  # Must have name and values
         ]
+
+        if not items or not attributes:
+            logger.debug("Skipping comparison with no items or attributes")
+            return None
 
         return Component.create(
             Comparison(
@@ -573,7 +603,12 @@ def parse_component(data: dict) -> Component | None:
                 profile_url=m.get("profile_url"),
             )
             for m in members_data
+            if m.get("name")  # Must have a name
         ]
+
+        if not members:
+            logger.debug("Skipping member_profiles with no members")
+            return None
 
         return Component.create(
             MemberProfiles(
@@ -595,12 +630,26 @@ def parse_component(data: dict) -> Component | None:
                 not_voting=int(p.get("not_voting", 0)),
             )
             for p in party_data
+            if p.get("party")  # Must have a party name
         ]
+
+        total_for = int(data.get("total_for", 0))
+        total_against = int(data.get("total_against", 0))
+
+        # Must have either totals or party breakdown with votes
+        has_totals = total_for > 0 or total_against > 0
+        has_party_votes = any(
+            p.votes_for > 0 or p.votes_against > 0 for p in party_breakdown
+        )
+
+        if not has_totals and not has_party_votes:
+            logger.debug("Skipping voting_breakdown with no vote data")
+            return None
 
         return Component.create(
             VotingBreakdown(
-                total_for=int(data.get("total_for", 0)),
-                total_against=int(data.get("total_against", 0)),
+                total_for=total_for,
+                total_against=total_against,
                 party_breakdown=party_breakdown,
                 title=data.get("title"),
                 date=data.get("date"),

@@ -17,9 +17,16 @@
   let { data }: Props = $props();
 
   let title = $derived(data.title as string | undefined);
-  let columns = $derived((data.columns as Column[]) || []);
-  let rows = $derived((data.rows as RowData[]) || []);
+  let columns = $derived(
+    ((data.columns as Column[]) || []).filter((c) => c.header || c.key)
+  );
+  let rows = $derived(
+    ((data.rows as RowData[]) || []).filter(
+      (r) => Object.keys(r).length > 0 || (r.cells && Object.keys(r.cells).length > 0)
+    )
+  );
   let caption = $derived(data.caption as string | undefined);
+  let hasData = $derived(columns.length > 0 && rows.length > 0);
 
   function getCellValue(row: RowData, key: string): string {
     if (row.cells && typeof row.cells === 'object') {
@@ -30,38 +37,40 @@
   }
 </script>
 
-<div class="data-table">
-  {#if title}
-    <h3 class="title">{title}</h3>
-  {/if}
+{#if hasData}
+  <div class="data-table">
+    {#if title}
+      <h3 class="title">{title}</h3>
+    {/if}
 
-  <div class="table-wrapper">
-    <table>
-      <thead>
-        <tr>
-          {#each columns as column}
-            <th style:text-align={column.align || 'left'}>{column.header}</th>
-          {/each}
-        </tr>
-      </thead>
-      <tbody>
-        {#each rows as row}
+    <div class="table-wrapper">
+      <table>
+        <thead>
           <tr>
             {#each columns as column}
-              <td style:text-align={column.align || 'left'}>
-                {getCellValue(row, column.key)}
-              </td>
+              <th style:text-align={column.align || 'left'}>{column.header}</th>
             {/each}
           </tr>
-        {/each}
-      </tbody>
-    </table>
-  </div>
+        </thead>
+        <tbody>
+          {#each rows as row}
+            <tr>
+              {#each columns as column}
+                <td style:text-align={column.align || 'left'}>
+                  {getCellValue(row, column.key)}
+                </td>
+              {/each}
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    </div>
 
-  {#if caption}
-    <p class="caption">{caption}</p>
-  {/if}
-</div>
+    {#if caption}
+      <p class="caption">{caption}</p>
+    {/if}
+  </div>
+{/if}
 
 <style>
   .data-table {

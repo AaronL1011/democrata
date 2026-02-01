@@ -21,13 +21,23 @@
   let totalFor = $derived((data.total_for as number) || 0);
   let totalAgainst = $derived((data.total_against as number) || 0);
   let totalAbstentions = $derived((data.total_abstentions as number) || 0);
-  let partyBreakdown = $derived((data.party_breakdown as PartyVote[]) || []);
+  let partyBreakdown = $derived(
+    ((data.party_breakdown as PartyVote[]) || []).filter((p) => p.party)
+  );
   let caption = $derived(data.caption as string | undefined);
 
   let totalVotes = $derived(totalFor + totalAgainst);
   let forPercent = $derived(totalVotes > 0 ? (totalFor / totalVotes) * 100 : 50);
+
+  // Must have either vote totals or party breakdown with votes
+  let hasVoteData = $derived(
+    totalFor > 0 ||
+    totalAgainst > 0 ||
+    partyBreakdown.some((p) => p.votes_for > 0 || p.votes_against > 0)
+  );
 </script>
 
+{#if hasVoteData}
 <div class="voting-breakdown">
   {#if title}
     <div class="header">
@@ -92,6 +102,7 @@
     <p class="caption">{caption}</p>
   {/if}
 </div>
+{/if}
 
 <style>
   .voting-breakdown {

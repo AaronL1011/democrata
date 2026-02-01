@@ -16,10 +16,13 @@
 
   let title = $derived(data.title as string | undefined);
   let chartType = $derived((data.chart_type as string) || 'bar');
-  let series = $derived((data.series as ChartSeries[]) || []);
+  let series = $derived(
+    ((data.series as ChartSeries[]) || []).filter((s) => s.data && s.data.length > 0)
+  );
   let xAxisLabel = $derived(data.x_axis_label as string | undefined);
   let yAxisLabel = $derived(data.y_axis_label as string | undefined);
   let caption = $derived(data.caption as string | undefined);
+  let hasData = $derived(series.length > 0);
 
   let canvas: HTMLCanvasElement | undefined = $state();
   let chartInstance: Chart | null = null;
@@ -99,19 +102,21 @@
   }
 </script>
 
-<div class="chart">
-  {#if title}
-    <h3 class="title">{title}</h3>
-  {/if}
+{#if hasData}
+  <div class="chart">
+    {#if title}
+      <h3 class="title">{title}</h3>
+    {/if}
 
-  <div class="chart-container">
-    <canvas bind:this={canvas}></canvas>
+    <div class="chart-container">
+      <canvas bind:this={canvas}></canvas>
+    </div>
+
+    {#if caption}
+      <p class="caption">{caption}</p>
+    {/if}
   </div>
-
-  {#if caption}
-    <p class="caption">{caption}</p>
-  {/if}
-</div>
+{/if}
 
 <style>
   .chart {

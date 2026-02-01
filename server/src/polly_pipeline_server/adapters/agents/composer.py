@@ -143,6 +143,12 @@ class LLMResponseComposer:
                     components.append(component)
                     component_ids.append(component.id)
 
+            # Skip sections with no valid components
+            if not component_ids:
+                section_title = section_data.get("title", "untitled")
+                logger.debug(f"Skipping empty section: {section_title}")
+                continue
+
             sections.append(
                 Section(
                     title=section_data.get("title"),

@@ -19,10 +19,13 @@
   let { data }: Props = $props();
 
   let title = $derived(data.title as string | undefined);
-  let members = $derived((data.members as MemberProfile[]) || []);
+  let members = $derived(
+    ((data.members as MemberProfile[]) || []).filter((m) => m.name)
+  );
   let caption = $derived(data.caption as string | undefined);
 </script>
 
+{#if members.length > 0}
 <div class="member-profiles">
   {#if title}
     <h3 class="title">{title}</h3>
@@ -81,6 +84,7 @@
     <p class="caption">{caption}</p>
   {/if}
 </div>
+{/if}
 
 <style>
   .member-profiles {

@@ -6,7 +6,7 @@
   let { data }: Props = $props();
 
   let title = $derived(data.title as string | undefined);
-  let message = $derived(data.message as string || '');
+  let message = $derived((data.message as string || '').trim());
   let level = $derived((data.level as string) || 'info');
 
   let levelClass = $derived(
@@ -14,12 +14,14 @@
   );
 </script>
 
-<div class="notice {levelClass}">
-  {#if title}
-    <h4 class="title">{title}</h4>
-  {/if}
-  <p class="message">{message}</p>
-</div>
+{#if message}
+  <div class="notice {levelClass}">
+    {#if title}
+      <h4 class="title">{title}</h4>
+    {/if}
+    <p class="message">{message}</p>
+  </div>
+{/if}
 
 <style>
   .notice {

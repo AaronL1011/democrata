@@ -13,39 +13,43 @@
   let { data }: Props = $props();
 
   let title = $derived(data.title as string | undefined);
-  let events = $derived((data.events as TimelineEvent[]) || []);
+  let events = $derived(
+    ((data.events as TimelineEvent[]) || []).filter((e) => e.date || e.label)
+  );
   let caption = $derived(data.caption as string | undefined);
 </script>
 
-<div class="timeline">
-  {#if title}
-    <h3 class="title">{title}</h3>
-  {/if}
+{#if events.length > 0}
+  <div class="timeline">
+    {#if title}
+      <h3 class="title">{title}</h3>
+    {/if}
 
-  <div class="events">
-    {#each events as event, index}
-      <div class="event">
-        <div class="marker">
-          <div class="dot"></div>
-          {#if index < events.length - 1}
-            <div class="line"></div>
-          {/if}
+    <div class="events">
+      {#each events as event, index}
+        <div class="event">
+          <div class="marker">
+            <div class="dot"></div>
+            {#if index < events.length - 1}
+              <div class="line"></div>
+            {/if}
+          </div>
+          <div class="content">
+            <time class="date">{event.date}</time>
+            <h4 class="label">{event.label}</h4>
+            {#if event.description}
+              <p class="description">{event.description}</p>
+            {/if}
+          </div>
         </div>
-        <div class="content">
-          <time class="date">{event.date}</time>
-          <h4 class="label">{event.label}</h4>
-          {#if event.description}
-            <p class="description">{event.description}</p>
-          {/if}
-        </div>
-      </div>
-    {/each}
+      {/each}
+    </div>
+
+    {#if caption}
+      <p class="caption">{caption}</p>
+    {/if}
   </div>
-
-  {#if caption}
-    <p class="caption">{caption}</p>
-  {/if}
-</div>
+{/if}
 
 <style>
   .timeline {

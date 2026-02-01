@@ -8,7 +8,7 @@
   let { data }: Props = $props();
 
   let title = $derived(data.title as string | undefined);
-  let content = $derived((data.content as string) || '');
+  let content = $derived(((data.content as string) || '').trim());
   let format = $derived((data.format as string) || 'markdown');
 
   // marked.parse is sync when async: false (default in browser)
@@ -18,18 +18,20 @@
   });
 </script>
 
-<div class="text-block">
-  {#if title}
-    <h3 class="title">{title}</h3>
-  {/if}
-  <div class="content">
-    {#if format === 'markdown'}
-      {@html renderedContent}
-    {:else}
-      <p>{content}</p>
+{#if content}
+  <div class="text-block">
+    {#if title}
+      <h3 class="title">{title}</h3>
     {/if}
+    <div class="content">
+      {#if format === 'markdown'}
+        {@html renderedContent}
+      {:else}
+        <p>{content}</p>
+      {/if}
+    </div>
   </div>
-</div>
+{/if}
 
 <style>
   .text-block {

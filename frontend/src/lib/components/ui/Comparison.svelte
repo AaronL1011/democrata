@@ -16,50 +16,59 @@
   let { data }: Props = $props();
 
   let title = $derived(data.title as string | undefined);
-  let items = $derived((data.items as ComparisonItem[]) || []);
-  let attributes = $derived((data.attributes as ComparisonAttribute[]) || []);
+  let items = $derived(
+    ((data.items as ComparisonItem[]) || []).filter((i) => i.name)
+  );
+  let attributes = $derived(
+    ((data.attributes as ComparisonAttribute[]) || []).filter(
+      (a) => a.name && a.values && a.values.length > 0
+    )
+  );
   let caption = $derived(data.caption as string | undefined);
+  let hasData = $derived(items.length > 0 && attributes.length > 0);
 </script>
 
-<div class="comparison">
-  {#if title}
-    <h3 class="title">{title}</h3>
-  {/if}
+{#if hasData}
+  <div class="comparison">
+    {#if title}
+      <h3 class="title">{title}</h3>
+    {/if}
 
-  <div class="table-wrapper">
-    <table>
-      <thead>
-        <tr>
-          <th class="attribute-header"></th>
-          {#each items as item}
-            <th class="item-header">
-              <span class="item-name">{item.name}</span>
-              {#if item.description}
-                <span class="item-description">{item.description}</span>
-              {/if}
-            </th>
-          {/each}
-        </tr>
-      </thead>
-      <tbody>
-        {#each attributes as attribute}
+    <div class="table-wrapper">
+      <table>
+        <thead>
           <tr>
-            <td class="attribute-name">{attribute.name}</td>
-            {#each attribute.values as value, i}
-              <td class="attribute-value" class:first={i === 0} class:last={i === items.length - 1}>
-                {value}
-              </td>
+            <th class="attribute-header"></th>
+            {#each items as item}
+              <th class="item-header">
+                <span class="item-name">{item.name}</span>
+                {#if item.description}
+                  <span class="item-description">{item.description}</span>
+                {/if}
+              </th>
             {/each}
           </tr>
-        {/each}
-      </tbody>
-    </table>
-  </div>
+        </thead>
+        <tbody>
+          {#each attributes as attribute}
+            <tr>
+              <td class="attribute-name">{attribute.name}</td>
+              {#each attribute.values as value, i}
+                <td class="attribute-value" class:first={i === 0} class:last={i === items.length - 1}>
+                  {value}
+                </td>
+              {/each}
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    </div>
 
-  {#if caption}
-    <p class="caption">{caption}</p>
-  {/if}
-</div>
+    {#if caption}
+      <p class="caption">{caption}</p>
+    {/if}
+  </div>
+{/if}
 
 <style>
   .comparison {
