@@ -6,6 +6,7 @@ interface QueryState {
   isLoading: boolean;
   error: string | null;
   response: QueryResponse | null;
+  hasSubmitted: boolean;
 }
 
 function createQueryStore() {
@@ -14,6 +15,7 @@ function createQueryStore() {
     isLoading: false,
     error: null,
     response: null,
+    hasSubmitted: false,
   });
 
   return {
@@ -26,6 +28,7 @@ function createQueryStore() {
         query,
         isLoading: true,
         error: null,
+        hasSubmitted: true,
       }));
 
       try {
@@ -53,6 +56,7 @@ function createQueryStore() {
         isLoading: false,
         error: null,
         response: null,
+        hasSubmitted: false,
       }),
   };
 }
@@ -67,3 +71,5 @@ export const components = derived(queryStore, ($store) => {
 export const layout = derived(queryStore, ($store) => {
   return $store.response?.layout ?? null;
 });
+
+export const hasSubmitted = derived(queryStore, ($store) => $store.hasSubmitted);

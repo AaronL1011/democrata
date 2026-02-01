@@ -3,6 +3,7 @@
   import QueryInput from '$lib/components/query/QueryInput.svelte';
   import QueryResults from '$lib/components/query/QueryResults.svelte';
   import UploadPage from '$lib/components/upload/UploadPage.svelte';
+  import { hasSubmitted } from '$lib/stores/query';
 
   let currentPath = $state(window.location.pathname);
 
@@ -18,25 +19,29 @@
 {#if currentPath === '/upload'}
   <UploadPage />
 {:else}
-<main>
-  <header>
-    <h1>Polly Pipeline</h1>
-    <p class="tagline">
-      Understand political information through clear, factual analysis
-    </p>
-  </header>
+<main class:has-results={$hasSubmitted}>
+  <div class="hero-section" class:collapsed={$hasSubmitted}>
+    <div class="hero-content">
+      <h1>Polly AI</h1>
+      <p class="tagline">
+        Democratising politics through clear, factual analysis and intelligence
+      </p>
+    </div>
+    
+    <div class="query-container">
+      <QueryInput />
+    </div>
+  </div>
 
-  <section class="query-section">
-    <QueryInput />
-  </section>
+  {#if $hasSubmitted}
+    <section class="results-section">
+      <QueryResults />
+    </section>
 
-  <section class="results-section">
-    <QueryResults />
-  </section>
-
-  <footer>
-    <p>Non-partisan political data analysis · Factual accuracy without advocacy</p>
-  </footer>
+    <footer>
+      <p>Polly AI strives to be a non-partisan political intelligence tool · AI may have inaccuracies, always check sources</p>
+    </footer>
+  {/if}
 </main>
 {/if}
 
@@ -47,40 +52,94 @@
     flex-direction: column;
   }
 
-  header {
+  /* Hero Section - Initial centered state */
+  .hero-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
     padding: var(--spacing-8);
-    text-align: center;
     background: var(--color-surface);
+    transition: min-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                padding 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .hero-section.collapsed {
+    min-height: auto;
+    padding: var(--spacing-6) var(--spacing-8);
     border-bottom: 1px solid var(--color-border);
     box-shadow: var(--shadow-xs);
   }
 
-  header h1 {
+  .hero-content {
+    text-align: center;
+    margin-bottom: var(--spacing-10);
+    transition: margin-bottom 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.3s ease;
+  }
+
+  .hero-section.collapsed .hero-content {
+    margin-bottom: var(--spacing-4);
+  }
+
+  .hero-content h1 {
     font-size: var(--font-size-3xl);
     font-weight: var(--font-weight-bold);
     color: var(--color-text-heading);
-    margin: 0 0 var(--spacing-2);
+    margin: 0 0 var(--spacing-3);
     letter-spacing: -0.025em;
+    transition: font-size 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .hero-section.collapsed .hero-content h1 {
+    font-size: var(--font-size-xl);
+    margin-bottom: var(--spacing-1);
   }
 
   .tagline {
     color: var(--color-text-secondary);
-    font-size: var(--font-size-base);
+    font-size: var(--font-size-lg);
     margin: 0;
+    max-width: 32rem;
+    line-height: var(--line-height-relaxed);
+    transition: font-size 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.3s ease;
   }
 
-  .query-section {
-    padding: var(--spacing-8);
-    background: var(--color-surface);
-    border-bottom: 1px solid var(--color-border);
+  .hero-section.collapsed .tagline {
+    font-size: var(--font-size-sm);
   }
 
+  .query-container {
+    width: 100%;
+    max-width: var(--max-width-md);
+    transition: max-width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .hero-section.collapsed .query-container {
+    max-width: var(--max-width-lg);
+  }
+
+  /* Results Section */
   .results-section {
     flex: 1;
     padding: var(--spacing-8);
     max-width: var(--max-width-lg);
     width: 100%;
     margin: 0 auto;
+    animation: fadeSlideIn 0.4s ease-out;
+  }
+
+  @keyframes fadeSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(1rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   footer {
@@ -90,6 +149,16 @@
     font-size: var(--font-size-sm);
     border-top: 1px solid var(--color-border);
     background: var(--color-surface);
+    animation: fadeIn 0.4s ease-out 0.2s both;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 
   footer p {
