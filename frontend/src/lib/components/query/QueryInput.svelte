@@ -77,10 +77,10 @@
   button {
     padding: var(--spacing-3) var(--spacing-6);
     font-size: var(--font-size-base);
-    font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-bold);
     font-family: inherit;
-    color: var(--color-text-inverse);
-    background: var(--color-primary);
+    color: var(--color-primary);
+    background: transparent;
     border: none;
     border-radius: var(--radius-md);
     cursor: pointer;
@@ -89,11 +89,11 @@
   }
 
   button:hover:not(:disabled) {
-    background: var(--color-primary-hover);
+    background: var(--color-surface-hover);
   }
 
   button:active:not(:disabled) {
-    background: var(--color-primary-active);
+    /* background: var(--color-primary-active); */
     transform: translateY(1px);
   }
 
@@ -103,7 +103,7 @@
   }
 
   button:disabled {
-    background: var(--color-gray-300);
+    color: var(--color-gray-300);
     cursor: not-allowed;
   }
 </style>

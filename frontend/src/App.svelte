@@ -39,7 +39,7 @@
     </section>
 
     <footer>
-      <p>Polly AI strives to be non-partisan and factualy accurate. AI may have inaccuracies, always check sources.</p>
+      <p>Polly AI strives to be non-partisan and factualy accurate. AI may have inaccuracies, always interrogate sources.</p>
     </footer>
   {/if}
 </main>
@@ -90,6 +90,7 @@
     margin: 0 0 var(--spacing-3);
     letter-spacing: -0.025em;
     transition: font-size 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: fadeSlideIn 0.4s ease-in-out;
   }
 
   .hero-section.collapsed .hero-content h1 {
@@ -105,6 +106,8 @@
     line-height: var(--line-height-relaxed);
     transition: font-size 0.5s cubic-bezier(0.4, 0, 0.2, 1),
                 opacity 0.3s ease;
+    animation: fadeSlideIn 0.4s ease-in-out;
+
   }
 
   .hero-section.collapsed .tagline {
@@ -115,6 +118,7 @@
     width: 100%;
     max-width: var(--max-width-md);
     transition: max-width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: fadeSlideIn 0.6s ease-in-out;
   }
 
   .hero-section.collapsed .query-container {
