@@ -244,3 +244,29 @@ class RAGResult:
     metadata: QueryMetadata
     cached: bool = False
     cost: Any = None  # CostBreakdown from usage domain
+
+
+@dataclass
+class RetrievalResult:
+    """Result of context retrieval with coverage metrics."""
+
+    chunks: list[Any]  # list[Chunk] from ingestion domain
+    strategy_used: str  # RetrievalStrategy value
+    coverage: dict[str, float] = field(default_factory=dict)  # Per-entity coverage scores
+    is_sufficient: bool = True
+    warnings: list[str] = field(default_factory=list)
+
+    @property
+    def context_texts(self) -> list[str]:
+        """Extract text content from chunks."""
+        return [chunk.text for chunk in self.chunks]
+
+    @classmethod
+    def insufficient(cls, reason: str) -> "RetrievalResult":
+        """Create an insufficient retrieval result."""
+        return cls(
+            chunks=[],
+            strategy_used="single_focus",
+            is_sufficient=False,
+            warnings=[reason],
+        )

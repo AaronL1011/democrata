@@ -4,6 +4,14 @@ from functools import lru_cache
 
 from fastapi import Request
 
+from polly_pipeline_server.adapters.agents import (
+    AgentConfig,
+    create_context_retriever,
+    create_data_extractor,
+    create_query_planner,
+    create_response_composer,
+    create_response_verifier,
+)
 from polly_pipeline_server.adapters.cache.redis import RedisCache
 from polly_pipeline_server.adapters.extraction import ContentTypeExtractor
 from polly_pipeline_server.adapters.llm.factory import (
@@ -15,7 +23,14 @@ from polly_pipeline_server.adapters.llm.factory import (
 from polly_pipeline_server.adapters.storage.local import LocalBlobStore
 from polly_pipeline_server.adapters.storage.qdrant import QdrantVectorStore
 from polly_pipeline_server.adapters.usage.memory_store import InMemoryBalanceStore, InMemoryJobStore
+from polly_pipeline_server.domain.agents.ports import (
+    DataExtractor,
+    QueryPlanner,
+    ResponseComposer,
+    ResponseVerifier,
+)
 from polly_pipeline_server.domain.ingestion.use_cases import IngestDocument
+from polly_pipeline_server.domain.rag.ports import ContextRetriever
 from polly_pipeline_server.domain.rag.use_cases import ExecuteQuery
 
 
@@ -63,6 +78,46 @@ def get_text_extractor() -> ContentTypeExtractor:
     return ContentTypeExtractor()
 
 
+# --- Agent Dependencies ---
+
+
+@lru_cache
+def get_agent_config() -> AgentConfig:
+    return AgentConfig.from_env()
+
+
+@lru_cache
+def get_query_planner() -> QueryPlanner:
+    return create_query_planner(get_agent_config())
+
+
+@lru_cache
+def get_data_extractor() -> DataExtractor:
+    return create_data_extractor(get_agent_config())
+
+
+@lru_cache
+def get_response_composer() -> ResponseComposer:
+    return create_response_composer(get_agent_config())
+
+
+@lru_cache
+def get_response_verifier() -> ResponseVerifier | None:
+    return create_response_verifier(get_agent_config())
+
+
+@lru_cache
+def get_context_retriever() -> ContextRetriever:
+    return create_context_retriever(
+        embedder=get_embedder(),
+        vector_store=get_vector_store(),
+        config=get_agent_config(),
+    )
+
+
+# --- Use Cases ---
+
+
 def get_ingest_document_use_case() -> IngestDocument:
     return IngestDocument(
         blob_store=get_blob_store(),
@@ -75,9 +130,11 @@ def get_ingest_document_use_case() -> IngestDocument:
 
 def get_execute_query_use_case() -> ExecuteQuery:
     return ExecuteQuery(
-        embedder=get_embedder(),
-        vector_store=get_vector_store(),
-        llm_client=get_llm_client(),
+        planner=get_query_planner(),
+        retriever=get_context_retriever(),
+        extractor=get_data_extractor(),
+        composer=get_response_composer(),
+        verifier=get_response_verifier(),
         cache=get_cache(),
         cost_margin=float(os.getenv("COST_MARGIN", "0.4")),
     )

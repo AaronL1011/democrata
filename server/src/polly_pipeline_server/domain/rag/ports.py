@@ -1,6 +1,6 @@
 from typing import Any, Protocol
 
-from .entities import Component, Layout, Query
+from .entities import Component, Layout, Query, RetrievalResult
 
 
 class LLMClient(Protocol):
@@ -14,6 +14,27 @@ class LLMClient(Protocol):
             Layout, Components, and token usage dict with keys:
             - input_tokens
             - output_tokens
+        """
+        ...
+
+
+class ContextRetriever(Protocol):
+    """Retrieves context using intent-driven strategies."""
+
+    async def retrieve(
+        self,
+        query: str,
+        intent: Any,  # IntentResult from agents domain
+    ) -> RetrievalResult:
+        """
+        Retrieve context chunks based on query and classified intent.
+
+        Args:
+            query: The user's natural language query.
+            intent: The classified intent with entities and retrieval strategy.
+
+        Returns:
+            RetrievalResult with chunks and coverage metrics.
         """
         ...
 
