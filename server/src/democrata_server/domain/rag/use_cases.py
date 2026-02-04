@@ -1,5 +1,6 @@
 import logging
 import time
+import asyncio
 from dataclasses import dataclass
 
 from polly_pipeline_server.domain.agents.entities import IntentResult
@@ -113,16 +114,18 @@ class ExecuteQuery:
 
             # Step 4: Extract - Grounded extraction for each component type
             context_texts = retrieval.context_texts
-            extractions = []
-            for component_type in intent.expected_components:
-                extraction = await self.extractor.extract(
+            extraction_tasks = [
+                self.extractor.extract(
                     component_type,
                     context_texts,
                     intent,
                 )
-                extractions.append(extraction)
+                for component_type in intent.expected_components
+            ]
+            extractions = await asyncio.gather(*extraction_tasks)
+            for extraction in extractions:
                 logger.debug(
-                    f"Extracted {component_type}: completeness={extraction.completeness}"
+                    f"Extracted {extraction.component_type}: completeness={extraction.completeness}"
                 )
 
             # Step 5: Compose - Format extracted data into response

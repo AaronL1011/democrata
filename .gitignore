@@ -47,7 +47,7 @@ logs/
 # Generated (e.g. protobuf)
 *_pb2.py
 *_pb2.pyi
-gen/**
+gen/*
 
 # Data
 data/
