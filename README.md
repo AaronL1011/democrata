@@ -2,9 +2,10 @@
 
 Demócrata is a political, social and government data ingestion engine that provides file-based RAG with a non-partisan, simple and accessible research portal.
 
-![democrata-landing-page](https://github.com/user-attachments/assets/3a456ee2-55cf-4ef8-ad6f-fb61a606132c)
-![democrata-query-result-page](https://github.com/user-attachments/assets/7a8f039e-f9a3-4425-b642-f1607e0d5c1e)
+<img width="3500" height="1951" alt="image" src="https://github.com/user-attachments/assets/374cfd82-ed39-4a24-8c83-578e2fb373a2" />
+<img width="3500" height="1951" alt="image" src="https://github.com/user-attachments/assets/74d799b3-b5b7-4e96-89fd-fcad3642ee3b" />
 
+---
 
 See [SPEC.md](SPEC.md) for the full spec.
 
