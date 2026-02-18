@@ -1,5 +1,6 @@
 """LLM-based data extractor for grounded extraction from context."""
 
+import json
 import logging
 from typing import Any
 
@@ -28,45 +29,90 @@ class LLMDataExtractor:
         model: str = "gpt-4o",
         temperature: float = 0.1,
     ):
-        self.api_key = api_key
-        self.base_url = base_url
-        self.model = model
-        self.temperature = temperature
-
-    def _get_structured_llm(self, component_type: str) -> Any:
-        """Get an LLM configured with structured output for the given component type."""
-        schema = get_extraction_schema(component_type)
-        base_llm = ChatOpenAI(
-            api_key=self.api_key,
-            base_url=self.base_url,
-            model=self.model,
-            temperature=self.temperature,
+        self.llm = ChatOpenAI(
+            api_key=api_key,
+            base_url=base_url,
+            model=model,
+            temperature=temperature,
         )
-        return base_llm.with_structured_output(schema)
+        self.model = model
 
     async def extract(
         self,
         component_type: str,
         context: list[str],
         intent: IntentResult,
-    ) -> ExtractionResult:
-        """Extract structured data from context for a specific component type."""
+    ) -> tuple[ExtractionResult, dict]:
+        """Extract structured data from context. Returns (ExtractionResult, token_usage)."""
         if not context:
-            return ExtractionResult.empty(component_type, "No context available")
+            return ExtractionResult.empty(component_type, "No context available"), {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "model": self.model,
+            }
 
         prompt = self._build_prompt(component_type, context, intent)
-        structured_llm = self._get_structured_llm(component_type)
-
         messages = [
-            SystemMessage(content="You are a data extractor. Extract only facts explicitly stated in the context."),
+            SystemMessage(
+                content="You are a data extractor. Extract only facts explicitly stated in the context. Output valid JSON only."
+            ),
             HumanMessage(content=prompt),
         ]
 
         try:
-            response: BaseExtractionSchema = await structured_llm.ainvoke(messages)
-            return self._build_extraction_result(response, component_type)
+            response = await self.llm.ainvoke(messages)
+            token_usage = self._extract_token_usage(response)
+            schema_class = get_extraction_schema(component_type)
+            data = self._parse_json_content(
+                response.content if isinstance(response.content, str) else str(response.content),
+                schema_class,
+            )
+            result = self._build_extraction_result(data, component_type)
+            return result, token_usage
         except Exception as e:
             logger.warning(f"Extraction failed for {component_type}: {e}")
+            return ExtractionResult.empty(component_type, str(e)), {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "model": self.model,
+            }
+
+    def _extract_token_usage(self, response) -> dict:
+        """Extract token usage from LangChain response metadata."""
+        usage = {}
+        if hasattr(response, "response_metadata") and response.response_metadata:
+            usage = response.response_metadata.get("token_usage") or response.response_metadata.get("usage") or {}
+        if hasattr(response, "usage_metadata") and response.usage_metadata:
+            usage = response.usage_metadata
+        if isinstance(usage, dict):
+            return {
+                "input_tokens": usage.get("input_tokens") or usage.get("prompt_tokens", 0),
+                "output_tokens": usage.get("output_tokens") or usage.get("completion_tokens", 0),
+                "model": self.model,
+            }
+        return {
+            "input_tokens": getattr(usage, "input_tokens", 0) or getattr(usage, "prompt_tokens", 0),
+            "output_tokens": getattr(usage, "output_tokens", 0) or getattr(usage, "completion_tokens", 0),
+            "model": self.model,
+        }
+
+    def _parse_json_content(self, content: str, schema_class: type[BaseExtractionSchema]) -> BaseExtractionSchema:
+        """Extract JSON from response and validate against schema."""
+        text = content.strip()
+        if "```json" in text:
+            text = text.split("```json")[1].split("```")[0]
+        elif "```" in text:
+            text = text.split("```")[1].split("```")[0]
+        data = json.loads(text)
+        return schema_class.model_validate(data)
+
+    def _parse_extraction(self, content: str, component_type: str) -> ExtractionResult:
+        """Parse response content to ExtractionResult. Returns empty result on parse failure."""
+        try:
+            schema_class = get_extraction_schema(component_type)
+            data = self._parse_json_content(content, schema_class)
+            return self._build_extraction_result(data, component_type)
+        except (json.JSONDecodeError, ValueError, KeyError) as e:
             return ExtractionResult.empty(component_type, str(e))
 
     def _build_prompt(

@@ -123,7 +123,10 @@ class UsageEvent:
         cached: bool = False,
         user_id: UUID | None = None,
         session_id: str | None = None,
+        credits_charged: int | None = None,
     ) -> "UsageEvent":
+        if credits_charged is None:
+            credits_charged = 0 if cached else cost.total_credits
         return cls(
             id=uuid4(),
             billing_account_id=billing_account_id,
@@ -134,7 +137,7 @@ class UsageEvent:
             query_preview=query[:50] + "..." if len(query) > 50 else query,
             cached=cached,
             cost=cost,
-            credits_charged=0 if cached else cost.total_credits,
+            credits_charged=credits_charged,
         )
 
     @classmethod

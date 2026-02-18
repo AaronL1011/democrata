@@ -1,5 +1,6 @@
 """PostgreSQL repository adapters for users, organizations, and billing."""
 
+import json
 import logging
 from datetime import UTC, datetime
 from uuid import UUID
@@ -12,6 +13,11 @@ from democrata_server.domain.billing.entities import (
     BillingAccount,
     CreditTransaction,
     TransactionType,
+)
+from democrata_server.domain.usage.entities import (
+    CostBreakdown,
+    UsageEvent,
+    UsageEventType,
 )
 from democrata_server.domain.orgs.entities import (
     Invitation,
@@ -720,3 +726,205 @@ class PostgresTransactionRepository:
                     transaction_type.value,
                 )
             return total or 0
+
+
+class PostgresUsageEventRepository:
+    """PostgreSQL implementation of UsageEventRepository."""
+
+    def __init__(self, pool: PostgresConnectionPool):
+        self._pool = pool
+
+    def _row_to_usage_event(self, row: asyncpg.Record) -> UsageEvent:
+        """Convert a database row to a UsageEvent entity."""
+        cost_data = row["cost_breakdown"] or {}
+        cost = CostBreakdown(
+            embedding_tokens=cost_data.get("embedding_tokens", 0),
+            embedding_cost_cents=cost_data.get("embedding_cost_cents", 0),
+            llm_input_tokens=cost_data.get("llm_input_tokens", 0),
+            llm_output_tokens=cost_data.get("llm_output_tokens", 0),
+            llm_cost_cents=cost_data.get("llm_cost_cents", 0),
+            vector_queries=cost_data.get("vector_queries", 0),
+            vector_cost_cents=cost_data.get("vector_cost_cents", 0),
+            margin_cents=cost_data.get("margin_cents", 0),
+            total_cents=cost_data.get("total_cents", 0),
+            total_credits=cost_data.get("total_credits", 0),
+        )
+        return UsageEvent(
+            id=row["id"],
+            billing_account_id=row["billing_account_id"],
+            event_type=UsageEventType(row["event_type"]),
+            session_id=row["session_id"],
+            user_id=row["user_id"],
+            timestamp=row["created_at"],
+            query_hash=row["query_hash"],
+            query_preview=row["query_preview"],
+            cached=row["cached"],
+            cost=cost,
+            credits_charged=row["credits_charged"],
+        )
+
+    async def create(self, event: UsageEvent) -> UsageEvent:
+        """Create a new usage event."""
+        async with self._pool.pool.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO public.usage_events 
+                (id, billing_account_id, user_id, session_id, event_type,
+                 query_hash, query_preview, cached, cost_breakdown, credits_charged, created_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                """,
+                event.id,
+                event.billing_account_id,
+                event.user_id,
+                event.session_id,
+                event.event_type.value,
+                event.query_hash,
+                event.query_preview,
+                event.cached,
+                json.dumps(event.cost.to_dict()),
+                event.credits_charged,
+                event.timestamp,
+            )
+            return event
+
+    async def get_by_id(self, event_id: UUID) -> UsageEvent | None:
+        """Get a usage event by ID."""
+        async with self._pool.pool.acquire() as conn:
+            row = await conn.fetchrow(
+                "SELECT * FROM public.usage_events WHERE id = $1",
+                event_id,
+            )
+            return self._row_to_usage_event(row) if row else None
+
+    async def get_by_billing_account(
+        self,
+        billing_account_id: UUID,
+        limit: int = 50,
+        offset: int = 0,
+        event_type: UsageEventType | None = None,
+    ) -> list[UsageEvent]:
+        """Get usage events for a billing account."""
+        async with self._pool.pool.acquire() as conn:
+            if event_type:
+                rows = await conn.fetch(
+                    """
+                    SELECT * FROM public.usage_events 
+                    WHERE billing_account_id = $1 AND event_type = $2
+                    ORDER BY created_at DESC
+                    LIMIT $3 OFFSET $4
+                    """,
+                    billing_account_id,
+                    event_type.value,
+                    limit,
+                    offset,
+                )
+            else:
+                rows = await conn.fetch(
+                    """
+                    SELECT * FROM public.usage_events 
+                    WHERE billing_account_id = $1
+                    ORDER BY created_at DESC
+                    LIMIT $2 OFFSET $3
+                    """,
+                    billing_account_id,
+                    limit,
+                    offset,
+                )
+            return [self._row_to_usage_event(row) for row in rows]
+
+    async def get_by_user(
+        self,
+        user_id: UUID,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[UsageEvent]:
+        """Get usage events performed by a user."""
+        async with self._pool.pool.acquire() as conn:
+            rows = await conn.fetch(
+                """
+                SELECT * FROM public.usage_events 
+                WHERE user_id = $1
+                ORDER BY created_at DESC
+                LIMIT $2 OFFSET $3
+                """,
+                user_id,
+                limit,
+                offset,
+            )
+            return [self._row_to_usage_event(row) for row in rows]
+
+    async def get_by_date_range(
+        self,
+        billing_account_id: UUID,
+        start_date: datetime,
+        end_date: datetime,
+    ) -> list[UsageEvent]:
+        """Get usage events within a date range."""
+        async with self._pool.pool.acquire() as conn:
+            rows = await conn.fetch(
+                """
+                SELECT * FROM public.usage_events 
+                WHERE billing_account_id = $1 AND created_at >= $2 AND created_at <= $3
+                ORDER BY created_at DESC
+                """,
+                billing_account_id,
+                start_date,
+                end_date,
+            )
+            return [self._row_to_usage_event(row) for row in rows]
+
+    async def get_total_credits_charged(
+        self,
+        billing_account_id: UUID,
+        since: datetime | None = None,
+    ) -> int:
+        """Get total credits charged for a billing account."""
+        async with self._pool.pool.acquire() as conn:
+            if since:
+                total = await conn.fetchval(
+                    """
+                    SELECT COALESCE(SUM(credits_charged), 0)::int 
+                    FROM public.usage_events 
+                    WHERE billing_account_id = $1 AND created_at >= $2
+                    """,
+                    billing_account_id,
+                    since,
+                )
+            else:
+                total = await conn.fetchval(
+                    """
+                    SELECT COALESCE(SUM(credits_charged), 0)::int 
+                    FROM public.usage_events 
+                    WHERE billing_account_id = $1
+                    """,
+                    billing_account_id,
+                )
+            return total or 0
+
+    async def get_by_query_hash(
+        self,
+        query_hash: str,
+        billing_account_id: UUID | None = None,
+    ) -> UsageEvent | None:
+        """Find a cached query event by hash."""
+        async with self._pool.pool.acquire() as conn:
+            if billing_account_id:
+                row = await conn.fetchrow(
+                    """
+                    SELECT * FROM public.usage_events 
+                    WHERE query_hash = $1 AND billing_account_id = $2
+                    ORDER BY created_at DESC LIMIT 1
+                    """,
+                    query_hash,
+                    billing_account_id,
+                )
+            else:
+                row = await conn.fetchrow(
+                    """
+                    SELECT * FROM public.usage_events 
+                    WHERE query_hash = $1
+                    ORDER BY created_at DESC LIMIT 1
+                    """,
+                    query_hash,
+                )
+            return self._row_to_usage_event(row) if row else None

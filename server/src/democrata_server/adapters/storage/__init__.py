@@ -6,6 +6,7 @@ from .postgres import (
     PostgresMembershipRepository,
     PostgresOrganizationRepository,
     PostgresTransactionRepository,
+    PostgresUsageEventRepository,
     PostgresUserRepository,
 )
 from .qdrant import QdrantVectorStore
@@ -18,6 +19,7 @@ __all__ = [
     "PostgresMembershipRepository",
     "PostgresOrganizationRepository",
     "PostgresTransactionRepository",
+    "PostgresUsageEventRepository",
     "PostgresUserRepository",
     "QdrantVectorStore",
 ]

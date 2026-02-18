@@ -66,6 +66,8 @@ export interface QueryResponse {
   cached: boolean;
   metadata: QueryMetadata;
   sources: SourceReference[];
+  credits_charged?: number;
+  balance_remaining?: number | null;
 }
 
 export interface HealthResponse {

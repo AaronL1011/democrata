@@ -2,12 +2,21 @@ import os
 import pytest
 from fastapi.testclient import TestClient
 
+from democrata_server.api.http.deps import get_upload_auth
 from democrata_server.main import app
+
+
+async def noop_upload_auth():
+    return None
 
 
 @pytest.fixture
 def client():
-    return TestClient(app)
+    app.dependency_overrides[get_upload_auth] = noop_upload_auth
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.clear()
 
 
 class TestHealthEndpoints:

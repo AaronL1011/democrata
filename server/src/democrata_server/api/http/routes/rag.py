@@ -1,12 +1,27 @@
 from dataclasses import fields, is_dataclass
 from enum import Enum
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
-from democrata_server.api.http.deps import get_execute_query_use_case, get_session_id
+from democrata_server.api.http.deps import (
+    AnonymousBillingContext,
+    UserBillingContext,
+    get_anonymous_session_store,
+    get_billing_account_repository,
+    get_execute_query_use_case,
+    get_rag_billing_context,
+    get_session_id,
+    get_transaction_repository,
+    get_usage_event_repository,
+)
+from democrata_server.domain.billing.entities import (
+    CreditTransaction,
+    ESTIMATED_MAX_QUERY_CREDITS,
+)
 from democrata_server.domain.rag.entities import Query, QueryFilters
 from democrata_server.domain.rag.use_cases import ExecuteQuery
+from democrata_server.domain.usage.entities import UsageEvent
 
 router = APIRouter()
 
@@ -64,13 +79,20 @@ class QueryResponse(BaseModel):
     cached: bool
     metadata: QueryMetadataData
     sources: list[SourceReferenceData]
+    credits_charged: int = 0
+    balance_remaining: int | None = None
 
 
 @router.post("/query", response_model=QueryResponse)
 async def query(
     request: QueryRequest,
     session_id: str = Depends(get_session_id),
+    billing_context: UserBillingContext | AnonymousBillingContext = Depends(get_rag_billing_context),
     execute_query: ExecuteQuery = Depends(get_execute_query_use_case),
+    billing_repo=Depends(get_billing_account_repository),
+    usage_event_repo=Depends(get_usage_event_repository),
+    transaction_repo=Depends(get_transaction_repository),
+    anonymous_store=Depends(get_anonymous_session_store),
 ) -> QueryResponse:
     filters = None
     if request.filters:
@@ -82,6 +104,22 @@ async def query(
             member_ids=request.filters.get("member_ids"),
         )
 
+    if isinstance(billing_context, AnonymousBillingContext):
+        if not billing_context.session.can_query():
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail="Free daily limit reached. Sign in for 100/month or add credits.",
+            )
+    else:
+        account = billing_context.account
+        if account.can_consume(1):
+            pass
+        elif not account.can_consume(ESTIMATED_MAX_QUERY_CREDITS):
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail="Insufficient credits. Add credits to continue.",
+            )
+
     query_obj = Query(
         text=request.query,
         session_id=session_id,
@@ -92,6 +130,60 @@ async def query(
         result = await execute_query.execute(query_obj)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+    credits_charged = 0
+    balance_remaining = None
+
+    if isinstance(billing_context, AnonymousBillingContext):
+        billing_context.session.consume_query()
+        await anonymous_store.update(billing_context.session)
+    else:
+        account = billing_context.account
+        cached = result.result.cached
+        on_free_tier = account.free_tier_remaining > 0
+        if cached:
+            if on_free_tier:
+                account.consume(1, use_free_tier_first=True)
+            credits_charged = 0
+        else:
+            if on_free_tier:
+                account.consume(1, use_free_tier_first=True)
+                credits_charged = 0
+            else:
+                credits_to_charge = result.cost.total_credits
+                try:
+                    paid_credits_used = account.consume(
+                        credits_to_charge, use_free_tier_first=True
+                    )
+                    credits_charged = paid_credits_used
+                except ValueError:
+                    raise HTTPException(
+                        status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                        detail="Insufficient credits for this query. Add credits to continue.",
+                    )
+        balance_remaining = account.credits
+        await billing_repo.update(account)
+
+        usage_event = UsageEvent.create_query_event(
+            billing_account_id=account.id,
+            query=request.query,
+            cost=result.cost,
+            cached=cached,
+            user_id=billing_context.user.id,
+            session_id=session_id,
+            credits_charged=credits_charged,
+        )
+        await usage_event_repo.create(usage_event)
+
+        if credits_charged > 0:
+            transaction = CreditTransaction.create_usage(
+                billing_account_id=account.id,
+                amount=credits_charged,
+                balance_after=account.credits,
+                usage_event_id=usage_event.id,
+                query_preview=usage_event.query_preview,
+            )
+            await transaction_repo.create(transaction)
 
     # Convert domain objects to response format
     components_data = []
@@ -148,6 +240,8 @@ async def query(
         cached=result.result.cached,
         metadata=metadata_data,
         sources=sources_data,
+        credits_charged=credits_charged,
+        balance_remaining=balance_remaining,
     )
 
 

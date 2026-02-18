@@ -5,14 +5,19 @@
   import UploadPage from '$lib/components/upload/UploadPage.svelte';
   import UserMenu from '$lib/components/auth/UserMenu.svelte';
   import SettingsPage from '$lib/components/auth/SettingsPage.svelte';
+  import { api } from '$lib/api/client';
   import { hasSubmitted } from '$lib/stores/query';
-  import { authStore } from '$lib/stores/auth';
+  import { authStore, isAuthenticated } from '$lib/stores/auth';
 
   let currentPath = $state(window.location.pathname);
 
-  // Initialize auth on mount
   $effect(() => {
     authStore.initialize();
+  });
+
+  $effect(() => {
+    const token = $authStore.session?.access_token ?? null;
+    api.setAccessToken(token);
   });
 
   $effect(() => {
@@ -21,6 +26,13 @@
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
+  });
+
+  $effect(() => {
+    if (currentPath === '/upload' && !$isAuthenticated) {
+      window.history.replaceState({}, '', '/');
+      currentPath = '/';
+    }
   });
 </script>
 

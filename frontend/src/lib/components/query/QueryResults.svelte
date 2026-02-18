@@ -4,7 +4,7 @@
 </script>
 
 {#if $queryStore.error}
-  <div class="error">
+  <div class="message">
     <p>{$queryStore.error}</p>
   </div>
 {:else if $queryStore.isLoading}
@@ -53,16 +53,16 @@
 {/if}
 
 <style>
-  .error {
+  .message {
     padding: var(--spacing-4);
-    background: var(--color-error-light);
-    border: 1px solid var(--color-error-muted);
+    background: var(--color-warning-light);
+    border: 1px solid var(--color-warning-muted);
     border-radius: var(--radius-md);
-    color: var(--color-error-text);
+    color: var(--color-warning-text);
     margin-top: var(--spacing-4);
   }
 
-  .error p {
+  .message p {
     margin: 0;
     font-size: var(--font-size-sm);
     line-height: var(--line-height-normal);

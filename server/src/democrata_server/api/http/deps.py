@@ -1,7 +1,9 @@
 import hashlib
 import os
+from dataclasses import dataclass
 from functools import lru_cache
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import Depends, Header, HTTPException, Request, status
 
@@ -16,6 +18,7 @@ from democrata_server.adapters.agents import (
 from democrata_server.adapters.auth.supabase import SupabaseAuthProvider
 from democrata_server.adapters.billing.stripe import StripePaymentProvider
 from democrata_server.adapters.cache.redis import RedisCache
+from democrata_server.adapters.llm.token_counter import count_tokens
 from democrata_server.adapters.extraction import ContentTypeExtractor
 from democrata_server.adapters.llm.factory import (
     Embedder,
@@ -31,6 +34,7 @@ from democrata_server.adapters.storage.postgres import (
     PostgresMembershipRepository,
     PostgresOrganizationRepository,
     PostgresTransactionRepository,
+    PostgresUsageEventRepository,
     PostgresUserRepository,
 )
 from democrata_server.adapters.storage.qdrant import QdrantVectorStore
@@ -46,6 +50,8 @@ from democrata_server.domain.agents.ports import (
     ResponseVerifier,
 )
 from democrata_server.domain.auth.entities import User
+from democrata_server.domain.billing.entities import BillingAccount
+from democrata_server.domain.usage.entities import AnonymousSession
 from democrata_server.domain.ingestion.use_cases import IngestDocument
 from democrata_server.domain.rag.ports import ContextRetriever
 from democrata_server.domain.rag.use_cases import ExecuteQuery
@@ -158,6 +164,7 @@ def get_execute_query_use_case() -> ExecuteQuery:
         composer=get_response_composer(),
         verifier=get_response_verifier(),
         cache=get_cache(),
+        token_counter=count_tokens,
         cost_margin=float(os.getenv("COST_MARGIN", "0.4")),
     )
 
@@ -174,6 +181,25 @@ def get_session_id(request: Request) -> str:
     user_agent = request.headers.get("user-agent", "unknown")
     fingerprint = f"{client_ip}|{user_agent}"
     return hashlib.sha256(fingerprint.encode()).hexdigest()[:16]
+
+
+@dataclass
+class UserBillingContext:
+    """Billing context for authenticated users."""
+
+    user: User
+    account: BillingAccount
+
+
+@dataclass
+class AnonymousBillingContext:
+    """Billing context for anonymous users."""
+
+    session_id: str
+    session: AnonymousSession
+
+
+RAGBillingContext = UserBillingContext | AnonymousBillingContext
 
 
 # --- Auth & User Dependencies ---
@@ -293,6 +319,51 @@ async def get_current_user_optional(
     return await auth_provider.get_user(token)
 
 
+def _hash_api_key(key: str) -> str:
+    return hashlib.sha256(key.encode()).hexdigest()
+
+
+@lru_cache
+def _get_hashed_api_keys() -> frozenset[str]:
+    keys_str = os.getenv("API_KEYS", "")
+    if not keys_str:
+        return frozenset()
+    return frozenset(_hash_api_key(k.strip()) for k in keys_str.split(",") if k.strip())
+
+
+async def get_upload_auth(
+    authorization: Annotated[str | None, Header()] = None,
+    auth_provider: SupabaseAuthProvider = Depends(get_auth_provider),
+) -> None:
+    """
+    Require authentication for upload routes via JWT (Supabase session) or API key.
+
+    Accepts either a valid Bearer JWT or a Bearer token that matches API_KEYS.
+    Raises 401 if neither is valid.
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required. Sign in or provide a valid API key.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    token = authorization[7:]
+    user = await auth_provider.get_user(token)
+    if user:
+        return
+
+    hashed_keys = _get_hashed_api_keys()
+    if hashed_keys and _hash_api_key(token) in hashed_keys:
+        return
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Authentication required. Sign in or provide a valid API key.",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
 # --- Repository Dependencies ---
 
 
@@ -324,6 +395,49 @@ def get_billing_account_repository() -> PostgresBillingAccountRepository:
 def get_transaction_repository() -> PostgresTransactionRepository:
     """Get the transaction repository."""
     return PostgresTransactionRepository(get_postgres_pool())
+
+
+def get_usage_event_repository() -> PostgresUsageEventRepository:
+    """Get the usage event repository."""
+    return PostgresUsageEventRepository(get_postgres_pool())
+
+
+async def get_rag_billing_context(
+    request: Request,
+    session_id: str = Depends(get_session_id),
+    current_user: User | None = Depends(get_current_user_optional),
+    x_organization_id: Annotated[str | None, Header()] = None,
+    billing_repo: PostgresBillingAccountRepository = Depends(get_billing_account_repository),
+    membership_repo: PostgresMembershipRepository = Depends(get_membership_repository),
+    anonymous_store: InMemoryAnonymousSessionStore = Depends(get_anonymous_session_store),
+) -> RAGBillingContext:
+    """
+    Resolve billing context for RAG queries.
+
+    If authenticated: return user's (or org's) billing account.
+    If anonymous: return session and AnonymousSession for quota tracking.
+    """
+    if current_user:
+        if x_organization_id:
+            try:
+                org_id = UUID(x_organization_id)
+                membership = await membership_repo.get_membership(current_user.id, org_id)
+                if membership and membership.role.can_manage_billing():
+                    account = await billing_repo.get_by_organization_id(org_id)
+                    if account:
+                        return UserBillingContext(user=current_user, account=account)
+            except (ValueError, TypeError):
+                pass
+        account = await billing_repo.get_by_user_id(current_user.id)
+        if not account:
+            await ensure_user_exists_in_local_db(current_user)
+            account = BillingAccount.create_for_user(current_user.id)
+            await billing_repo.create(account)
+        if account.check_and_reset_free_tier():
+            await billing_repo.update(account)
+        return UserBillingContext(user=current_user, account=account)
+    session = await anonymous_store.get_or_create(session_id)
+    return AnonymousBillingContext(session_id=session_id, session=session)
 
 
 # --- Payment Provider ---

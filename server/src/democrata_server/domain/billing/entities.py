@@ -44,6 +44,9 @@ CREDIT_PACKS = [
 ANONYMOUS_FREE_TIER_DAILY = 10
 REGISTERED_FREE_TIER_MONTHLY = 100
 
+# Pre-query credit check: pipeline has planner + N extractors + composer (and possibly verifier)
+ESTIMATED_MAX_QUERY_CREDITS = 25
+
 
 @dataclass
 class BillingAccount:

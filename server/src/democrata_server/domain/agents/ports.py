@@ -14,7 +14,7 @@ from .entities import (
 class QueryPlanner(Protocol):
     """Analyzes user queries to determine intent and retrieval strategy."""
 
-    async def analyze(self, query: str) -> IntentResult:
+    async def analyze(self, query: str) -> tuple[IntentResult, dict[str, Any]]:
         """
         Classify query intent and extract entities.
 
@@ -22,7 +22,7 @@ class QueryPlanner(Protocol):
             query: The user's natural language query.
 
         Returns:
-            IntentResult with query type, entities, and retrieval strategy.
+            Tuple of (IntentResult, token_usage dict with input_tokens, output_tokens, model).
         """
         ...
 
@@ -35,7 +35,7 @@ class DataExtractor(Protocol):
         component_type: str,
         context: list[str],
         intent: IntentResult,
-    ) -> ExtractionResult:
+    ) -> tuple[ExtractionResult, dict[str, Any]]:
         """
         Extract structured data from context for a specific component type.
 
@@ -45,7 +45,7 @@ class DataExtractor(Protocol):
             intent: The classified intent from the planner.
 
         Returns:
-            ExtractionResult with structured data and source attributions.
+            Tuple of (ExtractionResult, token_usage dict with input_tokens, output_tokens, model).
         """
         ...
 
@@ -81,7 +81,7 @@ class ResponseVerifier(Protocol):
         layout: Layout,
         components: list[Component],
         context: list[str],
-    ) -> VerificationResult:
+    ) -> tuple[VerificationResult, dict[str, Any]]:
         """
         Verify that response claims are supported by source context.
 
@@ -91,6 +91,6 @@ class ResponseVerifier(Protocol):
             context: Original context chunks for verification.
 
         Returns:
-            VerificationResult indicating validity and any unsupported claims.
+            Tuple of (VerificationResult, token_usage dict with input_tokens, output_tokens, model).
         """
         ...

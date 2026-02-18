@@ -1,9 +1,10 @@
 import logging
 import time
 import asyncio
+from collections.abc import Callable
 from dataclasses import dataclass
 
-from democrata_server.domain.agents.entities import IntentResult
+from democrata_server.domain.agents.entities import IntentResult, RetrievalStrategy
 from democrata_server.domain.agents.ports import (
     DataExtractor,
     QueryPlanner,
@@ -57,6 +58,7 @@ class ExecuteQuery:
         composer: ResponseComposer,
         cache: Cache,
         verifier: ResponseVerifier | None = None,
+        token_counter: Callable[[list[str]], int] | None = None,
         cache_ttl_seconds: int = 3600,
         cost_margin: float = 0.4,
     ):
@@ -66,6 +68,7 @@ class ExecuteQuery:
         self.composer = composer
         self.verifier = verifier
         self.cache = cache
+        self._token_counter = token_counter or (lambda texts: sum(max(1, len(t.split())) for t in texts))
         self.cache_ttl_seconds = cache_ttl_seconds
         self.cost_margin = cost_margin
 
@@ -88,7 +91,10 @@ class ExecuteQuery:
 
         try:
             # Step 1: Plan - Classify intent and extract entities
-            intent = await self.planner.analyze(query.text)
+            intent, planner_usage = await self.planner.analyze(query.text)
+            total_input_tokens += planner_usage.get("input_tokens", 0)
+            total_output_tokens += planner_usage.get("output_tokens", 0)
+            model_used = planner_usage.get("model", model_used)
             logger.debug(
                 f"Intent: {intent.query_type}, depth: {intent.response_depth.value}, "
                 f"components: {intent.expected_components}"
@@ -122,25 +128,33 @@ class ExecuteQuery:
                 )
                 for component_type in intent.expected_components
             ]
-            extractions = await asyncio.gather(*extraction_tasks)
-            for extraction in extractions:
+            extraction_results = await asyncio.gather(*extraction_tasks)
+            extractions = []
+            for extraction, extract_usage in extraction_results:
+                extractions.append(extraction)
+                total_input_tokens += extract_usage.get("input_tokens", 0)
+                total_output_tokens += extract_usage.get("output_tokens", 0)
+                model_used = extract_usage.get("model", model_used)
                 logger.debug(
                     f"Extracted {extraction.component_type}: completeness={extraction.completeness}"
                 )
 
             # Step 5: Compose - Format extracted data into response
-            layout, components, token_usage = await self.composer.compose(
+            layout, components, composer_usage = await self.composer.compose(
                 query.text,
                 intent,
                 extractions,
             )
-            total_input_tokens += token_usage.get("input_tokens", 0)
-            total_output_tokens += token_usage.get("output_tokens", 0)
-            model_used = token_usage.get("model", model_used)
+            total_input_tokens += composer_usage.get("input_tokens", 0)
+            total_output_tokens += composer_usage.get("output_tokens", 0)
+            model_used = composer_usage.get("model", model_used)
 
             # Step 6: Verify (optional) - Check claims against context
             if self.verifier and context_texts:
-                verification = await self.verifier.verify(layout, components, context_texts)
+                verification, verifier_usage = await self.verifier.verify(layout, components, context_texts)
+                total_input_tokens += verifier_usage.get("input_tokens", 0)
+                total_output_tokens += verifier_usage.get("output_tokens", 0)
+                model_used = verifier_usage.get("model", model_used)
                 if not verification.is_valid:
                     logger.warning(
                         f"Verification found issues: {len(verification.unsupported_claims)} claims"
@@ -170,13 +184,13 @@ class ExecuteQuery:
                 cached=False,
             )
 
-            # Calculate cost (approximate tokens for planner/extractor)
-            embedding_tokens = len(query.text.split()) * len(intent.rewritten_queries)
-            vector_queries = (
-                len(intent.rewritten_queries)
-                if intent.retrieval_strategy.value == "multi_entity"
-                else 1
-            )
+            # Calculate cost - embedding tokens from texts that get embedded
+            if intent.retrieval_strategy == RetrievalStrategy.MULTI_ENTITY and intent.rewritten_queries:
+                texts_to_embed = intent.rewritten_queries
+            else:
+                texts_to_embed = [query.text]
+            embedding_tokens = self._token_counter(texts_to_embed)
+            vector_queries = len(texts_to_embed) if intent.retrieval_strategy == RetrievalStrategy.MULTI_ENTITY else 1
 
             cost = CostBreakdown.calculate(
                 embedding_tokens=embedding_tokens,

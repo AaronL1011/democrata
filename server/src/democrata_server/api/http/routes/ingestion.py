@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from democrata_server.adapters.usage.memory_store import InMemoryJobStore
-from democrata_server.api.http.deps import get_ingest_document_use_case, get_job_store
+from democrata_server.api.http.deps import get_ingest_document_use_case, get_job_store, get_upload_auth
 from democrata_server.domain.ingestion.entities import DocumentMetadata, DocumentType
 from democrata_server.domain.ingestion.use_cases import IngestDocument
 
@@ -44,6 +44,7 @@ async def upload(
     source_url: Annotated[str | None, Form()] = None,
     title: Annotated[str | None, Form()] = None,
     ingest_use_case: IngestDocument = Depends(get_ingest_document_use_case),
+    _auth: None = Depends(get_upload_auth),
 ) -> JobResponse:
     content = await file.read()
 
@@ -77,6 +78,7 @@ async def upload(
 async def get_job_status(
     job_id: str,
     job_store: InMemoryJobStore = Depends(get_job_store),
+    _auth: None = Depends(get_upload_auth),
 ) -> JobStatusResponse:
     try:
         uuid = UUID(job_id)

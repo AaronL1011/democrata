@@ -41,10 +41,10 @@ class LLMResponseVerifier:
         layout: Layout,
         components: list[Component],
         context: list[str],
-    ) -> VerificationResult:
-        """Verify that response claims are supported by source context."""
+    ) -> tuple[VerificationResult, dict]:
+        """Verify that response claims are supported by source context. Returns (VerificationResult, token_usage)."""
         if not context:
-            return VerificationResult.valid()  # Can't verify without context
+            return VerificationResult.valid(), {"input_tokens": 0, "output_tokens": 0, "model": self.model}
 
         # Serialize response for verification
         response_text = self._serialize_response(layout, components)
@@ -63,13 +63,33 @@ class LLMResponseVerifier:
         try:
             response = await self.llm.ainvoke(messages)
             content = response.content
-            return self._parse_verification(content)
+            token_usage = self._extract_token_usage(response)
+            return self._parse_verification(content), token_usage
         except Exception as e:
             logger.warning(f"Verification failed: {e}")
             return VerificationResult(
                 is_valid=True,  # Default to valid if verification fails
                 warnings=[f"Verification skipped: {e}"],
-            )
+            ), {"input_tokens": 0, "output_tokens": 0, "model": self.model}
+
+    def _extract_token_usage(self, response) -> dict:
+        """Extract token usage from LangChain response metadata."""
+        usage = {}
+        if hasattr(response, "response_metadata") and response.response_metadata:
+            usage = response.response_metadata.get("token_usage") or response.response_metadata.get("usage") or {}
+        if hasattr(response, "usage_metadata") and response.usage_metadata:
+            usage = response.usage_metadata
+        if isinstance(usage, dict):
+            return {
+                "input_tokens": usage.get("input_tokens") or usage.get("prompt_tokens", 0),
+                "output_tokens": usage.get("output_tokens") or usage.get("completion_tokens", 0),
+                "model": self.model,
+            }
+        return {
+            "input_tokens": getattr(usage, "input_tokens", 0) or getattr(usage, "prompt_tokens", 0),
+            "output_tokens": getattr(usage, "output_tokens", 0) or getattr(usage, "completion_tokens", 0),
+            "model": self.model,
+        }
 
     def _serialize_response(self, layout: Layout, components: list[Component]) -> str:
         """Serialize layout and components to text for verification."""
