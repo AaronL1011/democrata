@@ -660,6 +660,8 @@
     display: flex;
     flex-direction: column;
     gap: var(--spacing-2);
+    max-height: 400px;
+    overflow-y: auto;
   }
 
   .file-item {
@@ -667,7 +669,6 @@
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-    overflow: hidden;
   }
 
   .file-item.uploading {

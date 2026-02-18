@@ -31,12 +31,10 @@
 
   function switchToPersonal() {
     authStore.switchContext('personal');
-    closeMenu();
   }
 
   function switchToOrg(orgId: string) {
     authStore.switchContext(orgId);
-    closeMenu();
   }
 
   function navigateToSettings() {
