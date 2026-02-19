@@ -1,0 +1,20 @@
+# Demócrata reverse proxy
+# Domains set via API_DOMAIN and APP_DOMAIN env vars (see .env.example)
+# Local: api.localhost, app.localhost. Production: api.example.com, app.example.com
+
+{env.API_DOMAIN} {
+	encode gzip zstd
+
+	reverse_proxy api:8000 {
+		transport http {
+			read_timeout 120s
+			write_timeout 120s
+		}
+	}
+}
+
+{env.APP_DOMAIN} {
+	encode gzip zstd
+
+	reverse_proxy frontend:5173
+}

@@ -1,4 +1,23 @@
 services:
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    environment:
+      API_DOMAIN: ${API_DOMAIN:-api.localhost}
+      APP_DOMAIN: ${APP_DOMAIN:-app.localhost}
+    depends_on:
+      api:
+        condition: service_healthy
+      frontend:
+        condition: service_started
+    restart: unless-stopped
+
   api:
     build: ./server
     ports:
@@ -99,3 +118,5 @@ volumes:
   postgres-data:
   redis-data:
   qdrant-data:
+  caddy-data:
+  caddy-config:

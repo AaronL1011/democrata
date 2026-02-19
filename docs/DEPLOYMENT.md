@@ -148,6 +148,14 @@ CORS_ORIGINS=https://app.example.com:4443
 
 ## 4. Quick Reference
 
+### Caddy Reverse Proxy (docker-compose)
+
+The stack includes an optional Caddy service for reverse proxy and automatic HTTPS:
+
+- **API_DOMAIN** / **APP_DOMAIN**: Set in `.env` (e.g. `api.example.com`, `app.example.com`)
+- Caddy provisions Let's Encrypt certs for real domains; `localhost` uses built-in trust
+- Update `VITE_API_URL` and `CORS_ORIGINS` to match your domains
+
 ### Minimal Production `.env` Skeleton (Server)
 
 ```env
