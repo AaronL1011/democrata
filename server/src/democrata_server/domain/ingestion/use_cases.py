@@ -37,13 +37,16 @@ class IngestDocument:
         filename: str,
         content_type: str,
         metadata: DocumentMetadata,
+        existing_job: Job | None = None,
     ) -> IngestDocumentResult:
-        job = Job.create()
-        job.start()
-        await self.job_store.save(job)
+        if existing_job is None:
+            job = Job.create()
+            job.start()
+            await self.job_store.save(job)
+        else:
+            job = existing_job
 
         try:
-            # Store raw blob if bytes
             blob_ref = None
             text_content: str
             if isinstance(content, bytes):
@@ -70,9 +73,13 @@ class IngestDocument:
                 # Store in vector store
                 await self.vector_store.upsert(chunks)
 
-            # Complete job
-            job.complete(documents=1, chunks=len(chunks))
-            await self.job_store.save(job)
+            if existing_job is None:
+                job.complete(documents=1, chunks=len(chunks))
+                await self.job_store.save(job)
+            else:
+                job.documents_processed += 1
+                job.chunks_created += len(chunks)
+                await self.job_store.save(job)
 
             return IngestDocumentResult(job=job, document=document, chunks=chunks)
 
@@ -88,11 +95,12 @@ class IngestDocument:
         start = 0
         position = 0
 
-        # Build metadata to attach to each chunk for source tracking
         chunk_metadata = {
             "source_name": metadata.title or metadata.source,
             "source_url": metadata.source_url or "",
             "source_date": metadata.date or "",
+            "document_type": metadata.document_type.value,
+            "date": metadata.date or "",
         }
 
         while start < len(text):

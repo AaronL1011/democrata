@@ -25,6 +25,29 @@ class JobStatus(str, Enum):
 
 
 @dataclass
+class ScrapedDocument:
+    """A document scraped from an external source, ready for ingestion."""
+
+    content: str | bytes
+    metadata: "DocumentMetadata"
+    content_type: str = "text/plain"
+    filename: str = "document"
+
+
+@dataclass
+class SourceConfig:
+    """Configuration for a scrape source from YAML."""
+
+    id: str
+    document_type: DocumentType
+    scraper: str
+    url: str
+    urls: list[str] | None = None
+    schedule: str | None = None
+    options: dict[str, object] = field(default_factory=dict)
+
+
+@dataclass
 class DocumentMetadata:
     document_type: DocumentType
     source: str
@@ -62,6 +85,11 @@ class Chunk:
         return cls(id=uuid4(), document_id=document_id, text=text, position=position)
 
 
+class JobType(str, Enum):
+    UPLOAD = "upload"
+    SCRAPE = "scrape"
+
+
 @dataclass
 class Job:
     id: UUID
@@ -72,10 +100,12 @@ class Job:
     error_message: str | None = None
     created_at: datetime = field(default_factory=utc_now)
     completed_at: datetime | None = None
+    job_type: JobType = JobType.UPLOAD
+    source_id: str | None = None
 
     @classmethod
-    def create(cls) -> "Job":
-        return cls(id=uuid4())
+    def create(cls, job_type: JobType = JobType.UPLOAD, source_id: str | None = None) -> "Job":
+        return cls(id=uuid4(), job_type=job_type, source_id=source_id)
 
     def start(self) -> None:
         self.status = JobStatus.RUNNING

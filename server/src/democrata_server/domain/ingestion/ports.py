@@ -1,7 +1,8 @@
+from collections.abc import AsyncIterator
 from typing import Protocol
 from uuid import UUID
 
-from .entities import Chunk, Job
+from .entities import Chunk, DocumentMetadata, Job, ScrapedDocument, SourceConfig
 
 
 class BlobStore(Protocol):
@@ -58,6 +59,13 @@ class JobStore(Protocol):
     async def save(self, job: Job) -> None: ...
 
     async def get(self, job_id: UUID) -> Job | None: ...
+
+
+class SourceFetcher(Protocol):
+    """Fetch documents from an external source. Yields ScrapedDocument per document."""
+
+    async def fetch(self, config: SourceConfig) -> AsyncIterator["ScrapedDocument"]:
+        ...
 
 
 class TextExtractor(Protocol):

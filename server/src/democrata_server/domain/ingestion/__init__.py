@@ -1,4 +1,14 @@
-from .entities import Chunk, Document, DocumentMetadata, DocumentType, Job, JobStatus
+from .entities import (
+    Chunk,
+    Document,
+    DocumentMetadata,
+    DocumentType,
+    Job,
+    JobStatus,
+    JobType,
+    ScrapedDocument,
+    SourceConfig,
+)
 from .ports import BlobStore, ChunkStore, Embedder, VectorStore
 
 __all__ = [
@@ -8,6 +18,9 @@ __all__ = [
     "DocumentType",
     "Job",
     "JobStatus",
+    "JobType",
+    "ScrapedDocument",
+    "SourceConfig",
     "BlobStore",
     "ChunkStore",
     "Embedder",

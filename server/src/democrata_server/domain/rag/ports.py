@@ -3,21 +3,6 @@ from typing import Any, Protocol
 from .entities import Component, Layout, Query, RetrievalResult
 
 
-class LLMClient(Protocol):
-    async def generate_response(
-        self, query: str, context: list[str], system_prompt: str | None = None
-    ) -> tuple[Layout, list[Component], dict[str, int]]:
-        """
-        Generate a structured RAG response.
-
-        Returns:
-            Layout, Components, and token usage dict with keys:
-            - input_tokens
-            - output_tokens
-        """
-        ...
-
-
 class ContextRetriever(Protocol):
     """Retrieves context using intent-driven strategies."""
 

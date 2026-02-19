@@ -77,11 +77,11 @@ class ExecuteQuery:
         start_time = time.time()
         cache_key = self.cache.query_key(query)
 
-        # Check cache
-        cached = await self.cache.get(cache_key)
-        if cached is not None:
+        cached_result = await self.cache.get(cache_key)
+        if cached_result is not None:
+            cached_result.cached = True
             return ExecuteQueryResult(
-                result=cached,
+                result=cached_result,
                 cost=CostBreakdown.zero(),
             )
 

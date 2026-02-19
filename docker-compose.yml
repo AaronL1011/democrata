@@ -1,4 +1,27 @@
 services:
+  api:
+    build: ./server
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      QDRANT_URL: http://qdrant:6333
+      DATABASE_URL: postgresql://democrata:democrata_dev@postgres:5432/democrata
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
   postgres:
     image: postgres:16-alpine
     ports:
@@ -38,10 +61,39 @@ services:
     environment:
       QDRANT__SERVICE__GRPC_PORT: 6334
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/6333' || exit 1"]
       interval: 10s
       timeout: 5s
-      retries: 3
+      retries: 5
+
+  arq-worker:
+    build: ./server
+    command: uv run arq democrata_server.worker.WorkerSettings
+    env_file: .env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      QDRANT_URL: http://qdrant:6333
+      DATABASE_URL: postgresql://democrata:democrata_dev@postgres:5432/democrata
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8000
+        VITE_SUPABASE_URL: ${SUPABASE_URL}
+        VITE_SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
+    ports:
+      - "5173:5173"
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
   postgres-data:

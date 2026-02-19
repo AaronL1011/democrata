@@ -20,13 +20,9 @@ from democrata_server.adapters.billing.stripe import StripePaymentProvider
 from democrata_server.adapters.cache.redis import RedisCache
 from democrata_server.adapters.llm.token_counter import count_tokens
 from democrata_server.adapters.extraction import ContentTypeExtractor
-from democrata_server.adapters.llm.factory import (
-    Embedder,
-    LLMClient,
-    create_embedder,
-    create_llm_client,
-)
+from democrata_server.adapters.llm.factory import Embedder, create_embedder
 from democrata_server.adapters.storage.local import LocalBlobStore
+from democrata_server.adapters.storage.s3 import S3BlobStore
 from democrata_server.adapters.storage.postgres import (
     PostgresBillingAccountRepository,
     PostgresConnectionPool,
@@ -41,8 +37,9 @@ from democrata_server.adapters.storage.qdrant import QdrantVectorStore
 from democrata_server.adapters.usage.memory_store import (
     InMemoryAnonymousSessionStore,
     InMemoryBillingAccountStore,
-    InMemoryJobStore,
 )
+from democrata_server.adapters.usage.redis_job_store import RedisJobStore
+from democrata_server.adapters.usage.redis_session_store import RedisAnonymousSessionStore
 from democrata_server.domain.agents.ports import (
     DataExtractor,
     QueryPlanner,
@@ -52,13 +49,23 @@ from democrata_server.domain.agents.ports import (
 from democrata_server.domain.auth.entities import User
 from democrata_server.domain.billing.entities import BillingAccount
 from democrata_server.domain.usage.entities import AnonymousSession
+from democrata_server.domain.usage.ports import AnonymousSessionStore
+from democrata_server.domain.ingestion.scrape_use_cases import ExecuteScrapeRun
 from democrata_server.domain.ingestion.use_cases import IngestDocument
 from democrata_server.domain.rag.ports import ContextRetriever
 from democrata_server.domain.rag.use_cases import ExecuteQuery
 
 
 @lru_cache
-def get_blob_store() -> LocalBlobStore:
+def get_blob_store() -> LocalBlobStore | S3BlobStore:
+    provider = os.getenv("BLOB_STORAGE_PROVIDER", "local").lower()
+    if provider == "s3":
+        return S3BlobStore(
+            bucket=os.getenv("S3_BUCKET", "democrata-blobs"),
+            region=os.getenv("AWS_REGION", "us-east-1"),
+            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID") or None,
+            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY") or None,
+        )
     return LocalBlobStore(base_path=os.getenv("BLOB_STORAGE_PATH", "./data/blobs"))
 
 
@@ -77,22 +84,20 @@ def get_embedder() -> Embedder:
 
 
 @lru_cache
-def get_llm_client() -> LLMClient:
-    return create_llm_client()
-
-
-@lru_cache
 def get_cache() -> RedisCache:
     return RedisCache(url=os.getenv("REDIS_URL", "redis://localhost:6379/0"))
 
 
 @lru_cache
-def get_job_store() -> InMemoryJobStore:
-    return InMemoryJobStore()
+def get_job_store() -> RedisJobStore:
+    return RedisJobStore()
 
 
 @lru_cache
-def get_anonymous_session_store() -> InMemoryAnonymousSessionStore:
+def get_anonymous_session_store() -> AnonymousSessionStore:
+    provider = os.getenv("ANONYMOUS_SESSION_STORE", "memory").lower()
+    if provider == "redis":
+        return RedisAnonymousSessionStore(daily_limit=10)
     return InMemoryAnonymousSessionStore()
 
 
@@ -153,6 +158,13 @@ def get_ingest_document_use_case() -> IngestDocument:
         vector_store=get_vector_store(),
         job_store=get_job_store(),
         text_extractor=get_text_extractor(),
+    )
+
+
+def get_execute_scrape_run_use_case() -> ExecuteScrapeRun:
+    return ExecuteScrapeRun(
+        ingest_use_case=get_ingest_document_use_case(),
+        job_store=get_job_store(),
     )
 
 
@@ -409,7 +421,7 @@ async def get_rag_billing_context(
     x_organization_id: Annotated[str | None, Header()] = None,
     billing_repo: PostgresBillingAccountRepository = Depends(get_billing_account_repository),
     membership_repo: PostgresMembershipRepository = Depends(get_membership_repository),
-    anonymous_store: InMemoryAnonymousSessionStore = Depends(get_anonymous_session_store),
+    anonymous_store: AnonymousSessionStore = Depends(get_anonymous_session_store),
 ) -> RAGBillingContext:
     """
     Resolve billing context for RAG queries.

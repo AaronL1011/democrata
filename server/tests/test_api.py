@@ -2,7 +2,8 @@ import os
 import pytest
 from fastapi.testclient import TestClient
 
-from democrata_server.api.http.deps import get_upload_auth
+from democrata_server.adapters.usage.memory_store import InMemoryJobStore
+from democrata_server.api.http.deps import get_job_store, get_upload_auth
 from democrata_server.main import app
 
 
@@ -13,6 +14,7 @@ async def noop_upload_auth():
 @pytest.fixture
 def client():
     app.dependency_overrides[get_upload_auth] = noop_upload_auth
+    app.dependency_overrides[get_job_store] = lambda: InMemoryJobStore()
     try:
         yield TestClient(app)
     finally:
@@ -28,7 +30,10 @@ class TestHealthEndpoints:
     def test_ready(self, client):
         response = client.get("/ready")
         assert response.status_code == 200
-        assert response.json() == {"status": "ready"}
+        data = response.json()
+        assert data["status"] == "ready"
+        assert "checks" in data
+        assert set(data["checks"].keys()) == {"redis", "qdrant", "postgres"}
 
 
 class TestIngestionEndpoints:

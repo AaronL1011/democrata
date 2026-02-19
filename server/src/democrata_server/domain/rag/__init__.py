@@ -17,7 +17,7 @@ from .entities import (
     Timeline,
     VotingBreakdown,
 )
-from .ports import Cache, LLMClient
+from .ports import Cache
 
 __all__ = [
     "Chart",
@@ -38,5 +38,4 @@ __all__ = [
     "Timeline",
     "VotingBreakdown",
     "Cache",
-    "LLMClient",
 ]

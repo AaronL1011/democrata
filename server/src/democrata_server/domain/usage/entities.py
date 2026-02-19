@@ -163,29 +163,31 @@ class UsageEvent:
 class AnonymousSession:
     """
     Tracks anonymous user sessions for rate limiting and free tier management.
-    
+
     Anonymous users are identified by a hash of their IP + User-Agent,
     and get limited free queries per day before needing to sign up.
     """
 
     session_id: str
-    free_tier_remaining: int = 10  # Daily limit for anonymous users
+    free_tier_remaining: int = 10
     free_tier_reset_at: datetime | None = None
+    daily_limit: int = 10
     created_at: datetime = field(default_factory=utc_now)
     updated_at: datetime = field(default_factory=utc_now)
 
     @classmethod
     def create(cls, session_id: str, daily_limit: int = 10) -> "AnonymousSession":
         now = utc_now()
-        # Reset at midnight UTC
         tomorrow = now.replace(hour=0, minute=0, second=0, microsecond=0)
         from datetime import timedelta
+
         tomorrow += timedelta(days=1)
-        
+
         return cls(
             session_id=session_id,
             free_tier_remaining=daily_limit,
             free_tier_reset_at=tomorrow,
+            daily_limit=daily_limit,
             created_at=now,
             updated_at=now,
         )
@@ -211,10 +213,10 @@ class AnonymousSession:
         """
         now = utc_now()
         if self.free_tier_reset_at and now >= self.free_tier_reset_at:
-            self.free_tier_remaining = 10
-            # Set next reset to tomorrow midnight UTC
+            self.free_tier_remaining = self.daily_limit
             tomorrow = now.replace(hour=0, minute=0, second=0, microsecond=0)
             from datetime import timedelta
+
             tomorrow += timedelta(days=1)
             self.free_tier_reset_at = tomorrow
             self.updated_at = now

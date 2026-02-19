@@ -1,0 +1,10 @@
+jurisdiction: au
+sources:
+  - id: aph-bills-index
+    type: bill
+    scraper: configurable_http
+    url: https://www.aph.gov.au/Parliamentary_Business/Bills_Legislation
+    schedule: "0 2 * * *"
+    options:
+      content_selector: "main"
+      delay_seconds: 1.5

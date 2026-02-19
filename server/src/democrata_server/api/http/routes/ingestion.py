@@ -1,12 +1,16 @@
+import os
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from arq import create_pool
+from arq.connections import RedisSettings
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from pydantic import BaseModel
 
-from democrata_server.adapters.usage.memory_store import InMemoryJobStore
+from democrata_server.adapters.scrapers import get_source_config
+from democrata_server.adapters.usage.redis_job_store import RedisJobStore
 from democrata_server.api.http.deps import get_ingest_document_use_case, get_job_store, get_upload_auth
-from democrata_server.domain.ingestion.entities import DocumentMetadata, DocumentType
+from democrata_server.domain.ingestion.entities import DocumentMetadata, DocumentType, Job, JobType
 from democrata_server.domain.ingestion.use_cases import IngestDocument
 
 router = APIRouter()
@@ -74,10 +78,34 @@ async def upload(
     )
 
 
+@router.post("/scrape/trigger", response_model=JobResponse)
+async def trigger_scrape(
+    source_id: Annotated[str, Query(description="Source ID from scrape config")],
+    job_store: RedisJobStore = Depends(get_job_store),
+    _auth: None = Depends(get_upload_auth),
+) -> JobResponse:
+    config = get_source_config(source_id)
+    if not config:
+        raise HTTPException(status_code=404, detail=f"Source {source_id} not found")
+
+    job = Job.create(job_type=JobType.SCRAPE, source_id=source_id)
+    await job_store.save(job)
+
+    redis = await create_pool(RedisSettings.from_dsn(os.getenv("REDIS_URL", "redis://localhost:6379/0")))
+    await redis.enqueue_job("run_scrape_job", str(job.id), source_id)
+    await redis.close()
+
+    return JobResponse(
+        job_id=str(job.id),
+        status=job.status.value,
+        progress_percent=job.progress_percent,
+    )
+
+
 @router.get("/jobs/{job_id}", response_model=JobStatusResponse)
 async def get_job_status(
     job_id: str,
-    job_store: InMemoryJobStore = Depends(get_job_store),
+    job_store: RedisJobStore = Depends(get_job_store),
     _auth: None = Depends(get_upload_auth),
 ) -> JobStatusResponse:
     try:
