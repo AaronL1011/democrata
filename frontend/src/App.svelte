@@ -83,6 +83,7 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    gap: var(--spacing-4);
     min-height: 100vh;
     padding: var(--spacing-8);
     background: var(--color-surface);
@@ -197,5 +198,37 @@
 
   footer p {
     margin: 0;
+  }
+
+  @media (max-width: 768px) {
+    .hero-section {
+      gap: 0;
+    }
+    .hero-content a h1 {
+      font-size: var(--font-size-3xl);
+    }
+    .hero-content .tagline {
+      font-size: var(--font-size-sm);
+    }
+    .query-container {
+      max-width: var(--max-width-sm);
+    }
+
+    .hero-section.collapsed {
+      padding: var(--spacing-4);
+    }
+    .hero-section.collapsed .hero-content {
+      margin-bottom: var(--spacing-2);
+    }
+    .hero-section.collapsed .hero-content h1 {
+      margin-bottom: var(--spacing-1);
+    }
+    .hero-section.collapsed .tagline {
+      visibility: hidden;
+      height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: visibility 0s, height 0s, opacity 0.3s ease-out;
+    }
   }
 </style>

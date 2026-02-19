@@ -45,6 +45,41 @@
     align-items: center;
   }
 
+  @media (max-width: 640px) {
+    .input-wrapper {
+      flex-direction: column;
+      gap: var(--spacing-2);
+      align-items: stretch;
+    }
+
+    textarea {
+      padding: var(--spacing-3);
+      min-height: 2.75rem;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      padding: var(--spacing-3) var(--spacing-4);
+    }
+  }
+
+  :global(.hero-section.collapsed) .input-wrapper {
+    flex-direction: row;
+    gap: var(--spacing-2);
+    align-items: center;
+  }
+
+  :global(.hero-section.collapsed) textarea {
+    padding: var(--spacing-2) var(--spacing-3);
+    min-height: 2.25rem;
+  }
+
+  :global(.hero-section.collapsed) button {
+    width: auto;
+    padding: var(--spacing-2) var(--spacing-4);
+  }
+
   textarea {
     flex: 1;
     padding: var(--spacing-3) var(--spacing-4);
