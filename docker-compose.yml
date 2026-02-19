@@ -7,7 +7,7 @@ services:
     environment:
       REDIS_URL: redis://redis:6379/0
       QDRANT_URL: http://qdrant:6333
-      DATABASE_URL: postgresql://democrata:democrata_dev@postgres:5432/democrata
+      DATABASE_URL: postgresql://${POSTGRES_USER:-democrata}:${POSTGRES_PASSWORD:-democrata_dev}@postgres:5432/${POSTGRES_DB:-democrata}
       OLLAMA_BASE_URL: http://host.docker.internal:11434
     depends_on:
       postgres:
@@ -27,14 +27,14 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: democrata
-      POSTGRES_PASSWORD: democrata_dev
-      POSTGRES_DB: democrata
+      POSTGRES_USER: ${POSTGRES_USER:-democrata}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-democrata_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-democrata}
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./supabase/migrations:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U democrata -d democrata"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -73,7 +73,7 @@ services:
     environment:
       REDIS_URL: redis://redis:6379/0
       QDRANT_URL: http://qdrant:6333
-      DATABASE_URL: postgresql://democrata:democrata_dev@postgres:5432/democrata
+      DATABASE_URL: postgresql://${POSTGRES_USER:-democrata}:${POSTGRES_PASSWORD:-democrata_dev}@postgres:5432/${POSTGRES_DB:-democrata}
     depends_on:
       postgres:
         condition: service_healthy
@@ -86,7 +86,7 @@ services:
     build:
       context: ./frontend
       args:
-        VITE_API_URL: http://localhost:8000
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
         VITE_SUPABASE_URL: ${SUPABASE_URL}
         VITE_SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
     ports:

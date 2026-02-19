@@ -14,6 +14,7 @@ Supporting documentation for the Demócrata project. The canonical product and s
 | **[IMPLEMENTATION.md](IMPLEMENTATION.md)** | Repository layout, domain-centred structure, tech stack, conventions, implementation notes. |
 | **[SCALING.md](SCALING.md)** | Scaling challenges, patterns, and phased implementation roadmap (MVP → high-scale production). |
 | **[COST_MODEL.md](COST_MODEL.md)** | Monetization strategy, pricing model (freemium + PAYG), usage tracking, revenue projections. |
+| **[DEPLOYMENT.md](DEPLOYMENT.md)** | Production deployment: environment variables, secrets management, and CORS configuration. |
 
 ---
 

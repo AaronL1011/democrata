@@ -12,6 +12,7 @@ load_dotenv(project_root / ".env")
 from democrata_server.api.http import router
 from democrata_server.api.http.deps import get_postgres_pool
 from democrata_server.api.http.middleware.cors import setup_cors
+from democrata_server.api.http.middleware.rate_limit import RateLimitMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -50,4 +51,5 @@ app = FastAPI(
 )
 
 setup_cors(app)
+app.add_middleware(RateLimitMiddleware)
 app.include_router(router)
